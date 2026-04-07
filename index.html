@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MADISA — Portal de Compras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --yellow:   #FFC200;
+  --yellow-lt:#FFD04D;
+  --yellow-d: #E0AA00;
+  --black:    #111111;
+  --black-2:  #181818;
+  --black-3:  #222222;
+  --black-4:  #2C2C2C;
+  --white:    #FFFFFF;
+  --gray:     #888888;
+  --gray-lt:  #BBBBBB;
+  --border:   #2A2A2A;
+  --blue:     #3498DB;
+  --purple:   #9B59B6;
+}
+html { scroll-behavior: smooth; }
+html, body { min-height: 100vh; font-family: 'Barlow', sans-serif; background: var(--black); color: var(--white); overflow-x: hidden; }
+
+@keyframes fadeUp    { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideDown { from { opacity:0; transform:translateY(-100%); } to { opacity:1; transform:translateY(0); } }
+@keyframes rotateSlow  { to { transform: rotate(360deg); } }
+@keyframes rotateSlowR { to { transform: rotate(-360deg); } }
+@keyframes pulseGlow   { 0%,100%{opacity:0.6} 50%{opacity:1} }
+@keyframes floatY      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
+@keyframes scanH       { from{transform:translateY(-100%)} to{transform:translateY(100vh)} }
+@keyframes dash        { to{stroke-dashoffset:0} }
+
+/* ── BG ── */
+.bg-deco { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.bg-deco canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* SVG decorations on top of canvas */
+.bg-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ring-1 { transform-origin: 1380px 80px; animation: rotateSlow 35s linear infinite; }
+.ring-2 { transform-origin: 1380px 80px; animation: rotateSlowR 22s linear infinite; }
+.ring-3 { transform-origin: 60px 860px; animation: rotateSlow 28s linear infinite; }
+.scan   { animation: scanH 8s 1s linear infinite; opacity: 0.25; }
+.tri-pulse { animation: pulseGlow 4s ease-in-out infinite; }
+.tri-pulse2 { animation: pulseGlow 6s 1.5s ease-in-out infinite; }
+.dot-b1{animation:pulseGlow 2s 0s ease-in-out infinite}
+.dot-b2{animation:pulseGlow 2s 0.4s ease-in-out infinite}
+.dot-b3{animation:pulseGlow 2s 0.8s ease-in-out infinite}
+.dot-b4{animation:pulseGlow 2s 1.2s ease-in-out infinite}
+.dot-b5{animation:pulseGlow 2s 1.6s ease-in-out infinite}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 60px; background: rgba(17,17,17,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,194,0,0.1);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.5rem; position: sticky; top: 0; z-index: 100;
+  animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.topbar-left img { height: 34px; }
+.topbar-divider { width: 1px; height: 26px; background: #333; }
+.topbar-sitename {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray);
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn-login-top {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--yellow); color: var(--black); border: none;
+  border-radius: 7px; padding: 8px 18px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.88rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; transition: background 0.15s, transform 0.1s; text-decoration: none;
+}
+.btn-login-top:hover  { background: var(--yellow-lt); }
+.btn-login-top:active { transform: scale(0.97); }
+.btn-login-top svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+/* ── HERO ── */
+.hero {
+  position: relative; z-index: 1;
+  min-height: calc(100vh - 60px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 4rem 2.5rem; max-width: 1200px; margin: 0 auto; gap: 4rem;
+  text-align: center; flex-direction: column;
+}
+.hero-content { flex: 1; max-width: 680px; }
+.hero-label { justify-content: center; }
+.hero-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,194,0,0.1); border: 1px solid rgba(255,194,0,0.25);
+  border-radius: 20px; padding: 5px 14px;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--yellow); margin-bottom: 1.5rem;
+  opacity: 0; animation: fadeUp 0.5s 0.3s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.hero-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--yellow); animation: pulseGlow 1.5s ease-in-out infinite; }
+.hero-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(3rem, 6vw, 5rem); font-weight: 800;
+  text-transform: uppercase; line-height: 0.95;
+  color: var(--white); margin-bottom: 1.5rem;
+  opacity: 0; animation: fadeUp 0.5s 0.45s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.hero-title .yellow { color: var(--yellow); }
+.hero-title .block  { display: block; }
+.hero-desc {
+  font-size: 1rem; color: var(--gray); line-height: 1.7;
+  max-width: 480px; margin: 0 auto 2.5rem;
+  opacity: 0; animation: fadeUp 0.5s 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.hero-actions {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+  opacity: 0; animation: fadeUp 0.5s 0.75s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.btn-primary {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--yellow); color: var(--black); border: none;
+  border-radius: 8px; padding: 13px 24px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; transition: background 0.15s; text-decoration: none;
+}
+.btn-primary:hover { background: var(--yellow-lt); }
+.btn-primary svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+.btn-ghost {
+  display: flex; align-items: center; gap: 8px;
+  background: none; color: var(--gray-lt);
+  border: 1.5px solid var(--border); border-radius: 8px; padding: 13px 24px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; transition: border-color 0.15s, color 0.15s; text-decoration: none;
+}
+.btn-ghost:hover { border-color: #555; color: var(--white); }
+
+.hero-visual {
+  flex: 1; max-width: 440px;
+  opacity: 0; animation: fadeUp 0.6s 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+/* Hero preview list */
+.hero-portals-preview {
+  background: rgba(24,24,24,0.8); border: 1px solid var(--border);
+  border-radius: 16px; padding: 22px; backdrop-filter: blur(10px);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.preview-label {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--gray); margin-bottom: 6px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border);
+}
+.preview-items { display: flex; flex-direction: column; gap: 6px; }
+.preview-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+  background: rgba(17,17,17,0.6); transition: border-color 0.2s, background 0.2s;
+  cursor: default;
+}
+.preview-item:hover { background: rgba(34,34,34,0.8); }
+.preview-item.mts-p:hover  { border-color: rgba(255,194,0,0.3); }
+.preview-item.naxt-p:hover { border-color: rgba(52,152,219,0.3); }
+.preview-item.silo-p:hover { border-color: rgba(155,89,182,0.3); }
+
+.pi-icon {
+  width: 38px; height: 38px; border-radius: 9px;
+  background: var(--black-3); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.preview-item.mts-p  .pi-icon { color: var(--yellow); }
+.preview-item.naxt-p .pi-icon { color: #5DADE2; }
+.preview-item.silo-p .pi-icon { color: #BB8FCE; }
+.pi-icon svg { width: 18px; height: 18px; }
+
+.pi-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.pi-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800; text-transform: uppercase; color: var(--white); }
+.pi-desc { font-size: 0.72rem; color: var(--gray); }
+
+.pi-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+.preview-item.mts-p  .pi-dot { background: var(--yellow); }
+.preview-item.naxt-p .pi-dot { background: #5DADE2; animation-delay: 0.5s; }
+.preview-item.silo-p .pi-dot { background: #BB8FCE; animation-delay: 1s; }
+
+.preview-footer {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.73rem; color: var(--gray); margin-top: 6px;
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+.preview-footer svg { stroke: var(--gray); flex-shrink: 0; }
+.stat-card {
+  background: rgba(24,24,24,0.85); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; backdrop-filter: blur(8px);
+  transition: border-color 0.2s, transform 0.2s;
+}
+.stat-card:hover { border-color: rgba(255,194,0,0.3); transform: translateY(-2px); }
+.stat-card.accent { border-color: rgba(255,194,0,0.3); background: rgba(255,194,0,0.06); }
+.stat-num { font-family: 'Barlow Condensed', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--white); line-height: 1; }
+.stat-card.accent .stat-num { color: var(--yellow); }
+.stat-lbl { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray); margin-top: 4px; }
+.stat-card.wide { grid-column: span 2; display: flex; align-items: center; gap: 14px; }
+.stat-card.wide .stat-num { font-size: 1.5rem; }
+.wide-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,194,0,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wide-icon svg { width: 20px; height: 20px; stroke: var(--yellow); fill: none; stroke-width: 1.8; }
+
+/* ── DIVIDER ── */
+.divider { position: relative; z-index: 1; border: none; border-top: 1px solid var(--border); margin: 0 2.5rem; }
+
+/* ── SECTIONS ── */
+.section { position: relative; z-index: 1; padding: 4rem 2.5rem; max-width: 1200px; margin: 0 auto; }
+.section-top { margin-bottom: 2rem; }
+.section-tag { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--yellow); margin-bottom: 8px; }
+.section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 2.2rem; font-weight: 800; text-transform: uppercase; color: var(--white); }
+.section-title span { color: var(--yellow); }
+.section-sub { font-size: 0.9rem; color: var(--gray); margin-top: 6px; }
+
+/* Portal cards */
+.portal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.portal-card {
+  background: rgba(24,24,24,0.85); border: 1.5px solid var(--border);
+  border-radius: 14px; padding: 28px 22px;
+  display: flex; flex-direction: column; gap: 16px;
+  text-decoration: none; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.18s;
+  position: relative; overflow: hidden; backdrop-filter: blur(6px);
+}
+.portal-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  transform: scaleX(0); transform-origin: left; transition: transform 0.25s ease;
+}
+.portal-card.mts::before   { background: var(--yellow); }
+.portal-card.naxt::before  { background: #3498DB; }
+.portal-card.silo::before  { background: #9B59B6; }
+.portal-card:hover { background: rgba(34,34,34,0.95); transform: translateY(-3px); }
+.portal-card.mts:hover  { border-color: var(--yellow); }
+.portal-card.naxt:hover { border-color: #3498DB; }
+.portal-card.silo:hover { border-color: #9B59B6; }
+.portal-card:hover::before { transform: scaleX(1); }
+.portal-icon { width: 52px; height: 52px; border-radius: 13px; background: var(--black-3); display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+.portal-icon svg { width: 26px; height: 26px; fill: none; stroke-width: 1.7; transition: stroke 0.2s; stroke: var(--gray); }
+.portal-card.mts:hover  .portal-icon { background: rgba(255,194,0,0.1); }
+.portal-card.naxt:hover .portal-icon { background: rgba(52,152,219,0.1); }
+.portal-card.silo:hover .portal-icon { background: rgba(155,89,182,0.1); }
+.portal-card.mts:hover  .portal-icon svg { stroke: var(--yellow); }
+.portal-card.naxt:hover .portal-icon svg { stroke: #3498DB; }
+.portal-card.silo:hover .portal-icon svg { stroke: #9B59B6; }
+.portal-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; font-weight: 800; text-transform: uppercase; color: var(--white); }
+.portal-desc { font-size: 0.82rem; color: var(--gray); line-height: 1.55; }
+.portal-link { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-top: auto; }
+.portal-card.mts  .portal-link { color: var(--yellow); }
+.portal-card.naxt .portal-link { color: #3498DB; }
+.portal-card.silo .portal-link { color: #9B59B6; }
+.portal-link svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+/* Tools grid (public) */
+.tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.tool-card {
+  background: rgba(24,24,24,0.85); border: 1.5px solid var(--border);
+  border-radius: 14px; padding: 24px 22px;
+  display: flex; align-items: center; gap: 18px;
+  text-decoration: none; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.18s;
+  position: relative; overflow: hidden; backdrop-filter: blur(6px);
+}
+.tool-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  transform: scaleX(0); transform-origin: left; transition: transform 0.25s ease;
+}
+.tool-card.dir::before   { background: var(--blue); }
+.tool-card.equiv::before { background: var(--green, #2ECC71); }
+.tool-card:hover { background: rgba(34,34,34,0.95); transform: translateY(-2px); }
+.tool-card.dir:hover   { border-color: var(--blue); }
+.tool-card.equiv:hover { border-color: #2ECC71; }
+.tool-card:hover::before { transform: scaleX(1); }
+.tool-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--black-3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+.tool-icon svg { width: 28px; height: 28px; fill: none; stroke-width: 1.7; stroke: var(--gray); transition: stroke 0.2s; }
+.tool-card.dir:hover   .tool-icon { background: rgba(52,152,219,0.12); }
+.tool-card.equiv:hover .tool-icon { background: rgba(46,204,113,0.12); }
+.tool-card.dir:hover   .tool-icon svg { stroke: var(--blue); }
+.tool-card.equiv:hover .tool-icon svg { stroke: #2ECC71; }
+.tool-body { flex: 1; }
+.tool-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; color: var(--white); margin-bottom: 4px; }
+.tool-desc { font-size: 0.8rem; color: var(--gray); line-height: 1.5; }
+.tool-badge {
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+  padding: 2px 8px; border-radius: 20px; margin-bottom: 6px; display: inline-block;
+}
+.tool-card.dir   .tool-badge { background: rgba(52,152,219,0.12); color: var(--blue); }
+.tool-card.equiv .tool-badge { background: rgba(46,204,113,0.12); color: #2ECC71; }
+
+/* ── CTA COMPRADOR ── */
+.cta-section { position: relative; z-index: 1; padding: 4rem 2.5rem; max-width: 1200px; margin: 0 auto; }
+.cta-box {
+  background: var(--yellow); border-radius: 16px;
+  padding: 3rem; display: flex; align-items: center;
+  justify-content: space-between; gap: 2rem; flex-wrap: wrap;
+  position: relative; overflow: hidden;
+}
+.cta-box::before {
+  content: ''; position: absolute; top: -60px; right: -60px;
+  width: 220px; height: 220px; border-radius: 50%;
+  background: rgba(0,0,0,0.06);
+}
+.cta-box::after {
+  content: ''; position: absolute; bottom: -80px; right: 80px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(0,0,0,0.04);
+}
+.cta-text { position: relative; z-index: 1; }
+.cta-text h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 800; text-transform: uppercase; color: var(--black); margin-bottom: 6px; }
+.cta-text p { font-size: 0.9rem; color: rgba(0,0,0,0.6); max-width: 420px; }
+.btn-cta {
+  display: flex; align-items: center; gap: 9px; position: relative; z-index: 1;
+  background: var(--black); color: var(--white); border: none;
+  border-radius: 9px; padding: 14px 28px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; transition: background 0.15s; text-decoration: none; white-space: nowrap;
+}
+.btn-cta:hover { background: #222; }
+.btn-cta svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+.btn-theme {
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid #333;
+  background: rgba(34,34,34,0.8); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s; flex-shrink: 0;
+}
+.btn-theme:hover { border-color: var(--yellow); background: rgba(255,194,0,0.08); }
+.btn-theme svg { width: 15px; height: 15px; stroke: var(--gray); fill: none; stroke-width: 2; }
+.btn-theme:hover svg { stroke: var(--yellow); }
+
+/* Light theme */
+body.light {
+  --black:   #F5F5F0;
+  --black-2: #FFFFFF;
+  --black-3: #EFEFEB;
+  --black-4: #E0E0DA;
+  --white:   #111111;
+  --gray:    #666666;
+  --gray-lt: #333333;
+  --border:  #DDDDDA;
+  --blue:    #2176AE;
+}
+body.light .topbar { background: rgba(255,255,255,0.95); border-bottom-color: #DDD; }
+body.light .topbar-sitename { color: #888; }
+body.light .topbar-divider { background: #DDD; }
+body.light .btn-theme { background: #EFEFEB; border-color: #DDD; }
+body.light .stat-card { background: rgba(239,239,235,0.9); }
+body.light .portal-card { background: rgba(239,239,235,0.85); }
+body.light .tool-card   { background: rgba(239,239,235,0.85); }
+body.light .hero-label  { background: rgba(255,194,0,0.12); }
+body.light .modal-box   { background: #FFFFFF; }
+body.light .iw input    { background: #F5F5F0; border-color: #DDD; color: #111; }
+body.light footer { border-top-color: #DDD; }
+
+footer {
+  position: relative; z-index: 1;
+  padding: 1.5rem 2.5rem; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.75rem; color: #444;
+}
+footer img { height: 24px; opacity: 0.4; }
+
+/* MODAL LOGIN */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  z-index: 200; display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(6px);
+}
+.modal-overlay.visible { display: flex; }
+.modal-box {
+  background: var(--black-2); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px; width: 100%; max-width: 400px;
+  margin: 1rem; animation: fadeUp 0.3s cubic-bezier(0.22,1,0.36,1);
+  position: relative;
+}
+.modal-header { margin-bottom: 22px; }
+.modal-accent { width: 36px; height: 4px; background: var(--yellow); border-radius: 2px; margin-bottom: 14px; }
+.modal-header h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; font-weight: 800; text-transform: uppercase; color: var(--white); margin-bottom: 4px; }
+.modal-header p { font-size: 0.84rem; color: var(--gray); }
+.modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; color: var(--gray); padding: 4px; transition: color 0.15s; }
+.modal-close:hover { color: var(--white); }
+.modal-close svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; display: block; }
+.fg { margin-bottom: 14px; }
+.fg label { display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray); margin-bottom: 6px; }
+.iw { position: relative; }
+.iw svg.ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: var(--gray); fill: none; stroke-width: 2; pointer-events: none; }
+.iw input {
+  width: 100%; background: #1E1E1E; border: 1.5px solid #2E2E2E;
+  border-radius: 7px; padding: 11px 12px 11px 38px;
+  font-family: 'Barlow', sans-serif; font-size: 0.9rem; color: var(--white);
+  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.iw input::placeholder { color: #444; }
+.iw input:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(255,194,0,0.1); }
+.iw .tpass { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--gray); padding: 0; line-height: 0; transition: color 0.15s; }
+.iw .tpass:hover { color: var(--yellow); }
+.modal-error { display: none; background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.3); border-radius: 6px; padding: 9px 13px; font-size: 0.8rem; color: #FF8080; margin-bottom: 12px; align-items: center; gap: 7px; }
+.modal-error.visible { display: flex; }
+.btn-modal-login {
+  width: 100%; background: var(--yellow); color: var(--black); border: none;
+  border-radius: 7px; padding: 13px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  cursor: pointer; transition: background 0.15s;
+  position: relative; overflow: hidden; margin-top: 4px;
+}
+.btn-modal-login:hover { background: var(--yellow-lt); }
+.btn-modal-login.loading { pointer-events: none; color: transparent; }
+.btn-modal-login.loading::after {
+  content: ''; position: absolute; width: 18px; height: 18px;
+  border: 2.5px solid var(--black); border-top-color: transparent; border-radius: 50%;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  animation: spin 0.65s linear infinite;
+}
+.btn-modal-login.success { background: #2ECC71; color: #fff; pointer-events: none; }
+@keyframes spin  { to { transform: translate(-50%,-50%) rotate(360deg); } }
+@keyframes shake { 10%,90%{transform:translateX(-3px)} 20%,80%{transform:translateX(5px)} 30%,50%,70%{transform:translateX(-5px)} 40%,60%{transform:translateX(5px)} }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .hero { flex-direction: column; gap: 2.5rem; min-height: auto; padding: 3rem 1.5rem; }
+  .hero-visual { max-width: 100%; }
+  .portal-grid { grid-template-columns: 1fr; }
+  .tools-grid  { grid-template-columns: 1fr; }
+  .cta-box { flex-direction: column; }
+  .section { padding: 3rem 1.5rem; }
+}
+@media (max-width: 600px) {
+  .stat-cards { grid-template-columns: 1fr 1fr; }
+  .topbar { padding: 0 1.25rem; }
+  .topbar-sitename { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- BG CANVAS + SVG -->
+<div class="bg-deco">
+  <canvas id="bgCanvas"></canvas>
+  <svg class="bg-svg" viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,194,0,0.07)" stroke-width="0.8"/>
+      </pattern>
+      <radialGradient id="g1" cx="78%" cy="12%" r="52%">
+        <stop offset="0%" stop-color="rgba(255,194,0,0.22)"/>
+        <stop offset="100%" stop-color="rgba(255,194,0,0)"/>
+      </radialGradient>
+      <radialGradient id="g2" cx="8%" cy="88%" r="42%">
+        <stop offset="0%" stop-color="rgba(255,194,0,0.16)"/>
+        <stop offset="100%" stop-color="rgba(255,194,0,0)"/>
+      </radialGradient>
+    </defs>
+
+    <rect width="1440" height="900" fill="url(#grid)"/>
+    <rect width="1440" height="900" fill="url(#g1)"/>
+    <rect width="1440" height="900" fill="url(#g2)"/>
+
+    <!-- Diagonal stripes bottom-left -->
+    <line x1="-80" y1="700" x2="360" y2="1060" stroke="rgba(255,194,0,0.14)" stroke-width="60"/>
+    <line x1="60"  y1="660" x2="500" y2="1020" stroke="rgba(255,194,0,0.10)" stroke-width="60"/>
+    <line x1="-80" y1="840" x2="240" y2="1080" stroke="rgba(255,194,0,0.08)" stroke-width="60"/>
+
+    <!-- Triangles top-right -->
+    <polygon class="tri-pulse"  points="1260,0 1440,0 1440,200" fill="rgba(255,194,0,0.14)"/>
+    <polygon class="tri-pulse2" points="1380,0 1440,0 1440,90"  fill="rgba(255,194,0,0.12)"/>
+
+    <!-- Rotating rings top-right -->
+    <circle class="ring-1" cx="1380" cy="80" r="320" fill="none" stroke="rgba(255,194,0,0.18)" stroke-width="1.5" stroke-dasharray="12 8"/>
+    <circle class="ring-2" cx="1380" cy="80" r="220" fill="none" stroke="rgba(255,194,0,0.14)" stroke-width="1"/>
+    <circle           cx="1380" cy="80" r="130" fill="none" stroke="rgba(255,194,0,0.10)" stroke-width="1"/>
+
+    <!-- Rotating ring bottom-left -->
+    <circle class="ring-3" cx="60" cy="860" r="240" fill="none" stroke="rgba(255,194,0,0.14)" stroke-width="1.5" stroke-dasharray="10 6"/>
+    <circle cx="60" cy="860" r="140" fill="none" stroke="rgba(255,194,0,0.10)" stroke-width="1"/>
+
+    <!-- Scan line -->
+    <rect class="scan" x="0" y="0" width="1440" height="2" fill="rgba(255,194,0,0.35)"/>
+
+    <!-- Accent lines top-right -->
+    <line x1="860" y1="0" x2="1440" y2="0"   stroke="rgba(255,194,0,0.40)" stroke-width="1"/>
+    <line x1="1440" y1="0" x2="1440" y2="300" stroke="rgba(255,194,0,0.40)" stroke-width="1"/>
+    <line x1="1100" y1="0" x2="1440" y2="380" stroke="rgba(255,194,0,0.14)" stroke-width="1"/>
+
+    <!-- Dot clusters -->
+    <circle class="dot-b1" cx="1120" cy="500" r="4" fill="rgba(255,194,0,0.8)"/>
+    <circle class="dot-b2" cx="1146" cy="500" r="4" fill="rgba(255,194,0,0.6)"/>
+    <circle class="dot-b3" cx="1172" cy="500" r="4" fill="rgba(255,194,0,0.4)"/>
+    <circle class="dot-b4" cx="1120" cy="526" r="4" fill="rgba(255,194,0,0.6)"/>
+    <circle class="dot-b5" cx="1146" cy="526" r="4" fill="rgba(255,194,0,0.4)"/>
+    <circle cx="1120" cy="552" r="4" fill="rgba(255,194,0,0.25)"/>
+
+    <!-- Mid horizontal accent -->
+    <line x1="0" y1="450" x2="1440" y2="450" stroke="rgba(255,194,0,0.08)" stroke-width="1"/>
+  </svg>
+</div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <img src="Imagenes/MADISA-logo-vector1.png" alt="MADISA CAT">
+    <div class="topbar-divider"></div>
+    <span class="topbar-sitename">Portal de Compras</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-theme" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="btn-login-top" href="#" onclick="abrirModal(); return false;">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Acceso Compradores
+    </a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-label"><div class="dot"></div>Área de Compras — MADISA</div>
+    <h1 class="hero-title">
+      <span class="block">Portal</span>
+      <span class="block yellow">de Compras</span>
+    </h1>
+    <p class="hero-desc">Accede a los portales del sistema y herramientas internas del área de compras de MADISA en un solo lugar.</p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="#herramientas">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Ver portales
+      </a>
+      <a class="btn-ghost" href="#" onclick="abrirModal(); return false;">
+        Soy comprador
+      </a>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- HERRAMIENTAS PÚBLICAS -->
+<section class="section" id="herramientas">
+  <div class="section-top">
+    <div class="section-tag">Consulta libre</div>
+    <h2 class="section-title">Herramientas <span>Disponibles</span></h2>
+    <p class="section-sub">Acceso sin inicio de sesión — disponibles para todo el equipo</p>
+  </div>
+  <div class="tools-grid">
+    <a class="tool-card dir" href="Directorio.html">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-badge">Directorio</div>
+        <div class="tool-name">Compradores</div>
+        <div class="tool-desc">Consulta de compradores MLA, CAT y marcas aliadas por sucursal y SOS.</div>
+      </div>
+    </a>
+    <a class="tool-card equiv" href="Equivalencias.html">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-badge">Equivalencias</div>
+        <div class="tool-name">Códigos SOS</div>
+        <div class="tool-desc">Consulta y búsqueda de equivalencias de códigos SOS entre sistemas DBS, NAXT y LP3.</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- PORTALES -->
+<section class="section" id="portales">
+  <div class="section-top">
+    <div class="section-tag">Acceso directo</div>
+    <h2 class="section-title">Portales <span>del Sistema</span></h2>
+    <p class="section-sub">Disponibles para todos los usuarios sin necesidad de acceso adicional</p>
+  </div>
+  <div class="portal-grid">
+    <a class="portal-card mts" href="MTS/Inicio.html" target="_blank">
+      <div class="portal-icon"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+      <div class="portal-name">MTS</div>
+      <div class="portal-desc">Seguimiento de tráfico de refacciones. Consulta el estado de órdenes de compra, guías y transportistas.</div>
+      <div class="portal-link">Abrir portal <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+    </a>
+    <a class="portal-card naxt" href="https://madisa-prod.operations.dynamics.com/?cmp=mdi&mi=DefaultDashboard&lng=en-us" target="_blank">
+      <div class="portal-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div class="portal-name">NAXT</div>
+      <div class="portal-desc">Microsoft Dynamics 365 de MADISA. Gestión de operaciones, finanzas y recursos empresariales.</div>
+      <div class="portal-link">Abrir portal <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+    </a>
+    <a class="portal-card silo" href="https://app.powerbi.com/groups/me/apps/86a5951a-3c6e-42c9-b6fd-e161e2b5ff80/reports/d07062d0-da57-4ecc-83ee-87cec3ce0105/742faa910186f61acb16?ctid=e1f30a39-f909-45fb-95e3-a9efc0b93658&experience=power-bi" target="_blank">
+      <div class="portal-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+      <div class="portal-name">SILO</div>
+      <div class="portal-desc">Dashboards de Power BI. Reportes y KPIs del área de compras en tiempo real.</div>
+      <div class="portal-link">Abrir portal <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+    </a>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- CTA COMPRADOR -->
+<section class="cta-section">
+  <div class="cta-box">
+    <div class="cta-text">
+      <h2>¿Eres del área de compras?</h2>
+      <p>Inicia sesión para acceder a las herramientas internas: análisis de precios, precios & bloqueos, fracciones arancelarias y más.</p>
+    </div>
+    <a class="btn-cta" href="#" onclick="abrirModal(); return false;">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Iniciar sesión
+    </a>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 — MADISA Portal de Compras</span>
+  <img src="Imagenes/MADISA-logo-vector1.png" alt="MADISA">
+</footer>
+
+<!-- MODAL LOGIN -->
+<div class="modal-overlay" id="loginModal" onclick="cerrarSiFuera(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="cerrarModal()">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="modal-header">
+      <div class="modal-accent"></div>
+      <h2>Acceso Compradores</h2>
+      <p>Ingresa tus credenciales para continuar</p>
+    </div>
+    <div class="modal-error" id="mError">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.8" fill="currentColor" stroke="none"/></svg>
+      <span id="mErrorTxt">Usuario o contraseña incorrectos.</span>
+    </div>
+    <div class="fg">
+      <label>Usuario</label>
+      <div class="iw">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="mUser" placeholder="usuario@madisa.com" autocomplete="username">
+      </div>
+    </div>
+    <div class="fg">
+      <label>Contraseña</label>
+      <div class="iw">
+        <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="mPass" placeholder="••••••••" autocomplete="current-password">
+        <button class="tpass" id="mToggle" type="button">
+          <svg id="mEye" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <button class="btn-modal-login" id="mBtn" onclick="handleLogin()">Entrar al portal</button>
+  </div>
+</div>
+
+<script>
+// ── PARTICLE BACKGROUND ──
+(function() {
+  const canvas = document.getElementById('bgCanvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function rand(a, b) { return Math.random() * (b - a) + a; }
+
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x  = rand(0, W);
+      this.y  = rand(0, H);
+      this.r  = rand(1, 3);
+      this.vx = rand(-0.2, 0.2);
+      this.vy = rand(-0.4, -0.1);
+      this.a  = rand(0.2, 0.7);
+      this.da = rand(0.004, 0.009) * (Math.random() > 0.5 ? 1 : -1);
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.a += this.da;
+      if (this.a <= 0 || this.a >= 0.4) this.da *= -1;
+      if (this.y < -10 || this.x < -10 || this.x > W + 10) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,194,0,${this.a})`;
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < 120; i++) particles.push(new Particle());
+
+  // Draw connections
+  function drawLines() {
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d  = Math.sqrt(dx*dx + dy*dy);
+        if (d < 160) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(255,194,0,${0.18 * (1 - d/160)})`;
+          ctx.lineWidth   = 0.8;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+    drawLines();
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+// ── TEMA ──
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeIcon').innerHTML = isLight
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  localStorage.setItem('mts_theme', isLight ? 'light' : 'dark');
+}
+if (localStorage.getItem('mts_theme') === 'light') toggleTheme();
+
+// ── MODAL ──
+function abrirModal() {
+  document.getElementById('loginModal').classList.add('visible');
+  setTimeout(() => document.getElementById('mUser').focus(), 100);
+}
+function cerrarModal() {
+  document.getElementById('loginModal').classList.remove('visible');
+  clearError();
+}
+function cerrarSiFuera(e) { if (e.target === document.getElementById('loginModal')) cerrarModal(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+
+document.getElementById('mToggle').addEventListener('click', () => {
+  const p = document.getElementById('mPass');
+  const show = p.type === 'password';
+  p.type = show ? 'text' : 'password';
+  document.getElementById('mEye').innerHTML = show
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+});
+
+function showError(msg) {
+  document.getElementById('mErrorTxt').textContent = msg;
+  document.getElementById('mError').classList.add('visible');
+  const box = document.querySelector('.modal-box');
+  box.style.animation = 'none'; box.offsetHeight;
+  box.style.animation = 'shake 0.4s cubic-bezier(0.36,0.07,0.19,0.97)';
+}
+function clearError() {
+  document.getElementById('mError').classList.remove('visible');
+  document.getElementById('mUser').value = '';
+  document.getElementById('mPass').value = '';
+  document.getElementById('mBtn').textContent = 'Entrar al portal';
+  document.getElementById('mBtn').className = 'btn-modal-login';
+}
+
+[document.getElementById('mUser'), document.getElementById('mPass')].forEach(i => {
+  i.addEventListener('input', () => document.getElementById('mError').classList.remove('visible'));
+  i.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+});
+
+function handleLogin() {
+  const user = document.getElementById('mUser').value.trim();
+  const pass = document.getElementById('mPass').value;
+  const btn  = document.getElementById('mBtn');
+  if (!user) { showError('Ingresa tu usuario.'); return; }
+  if (!pass)  { showError('Ingresa tu contraseña.'); return; }
+  btn.classList.add('loading');
+  document.getElementById('mError').classList.remove('visible');
+  setTimeout(() => {
+    btn.classList.remove('loading');
+    if (user === 'admin' && pass === '1234') {
+      btn.classList.add('success');
+      btn.textContent = '✓ Acceso concedido';
+      localStorage.setItem('madisa_rol', 'comprador');
+      localStorage.setItem('madisa_user', user);
+      setTimeout(() => { window.location.href = 'compras.html'; }, 800);
+    } else {
+      btn.textContent = 'Entrar al portal';
+      showError('Usuario o contraseña incorrectos.');
+    }
+  }, 1200);
+}
+</script>
+</body>
+</html>

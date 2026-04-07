@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MADISA — Equivalencias SOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --yellow:   #FFC200;
+  --yellow-lt:#FFD04D;
+  --black:    #111111;
+  --black-2:  #181818;
+  --black-3:  #222222;
+  --black-4:  #2C2C2C;
+  --white:    #FFFFFF;
+  --gray:     #888888;
+  --gray-lt:  #BBBBBB;
+  --border:   #2A2A2A;
+  --green:    #2ECC71;
+}
+html, body { min-height: 100vh; font-family: 'Barlow', sans-serif; background: var(--black); color: var(--white); }
+
+@keyframes slideDown { from{opacity:0;transform:translateY(-100%)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp    { from{opacity:0;transform:translateY(14px)}  to{opacity:1;transform:translateY(0)} }
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 56px; background: var(--black-2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; position: sticky; top: 0; z-index: 100;
+  animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.topbar-left img { height: 32px; }
+.topbar-divider { width: 1px; height: 26px; background: #333; }
+.topbar-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.9rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--gray-lt);
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn-back {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid #333; border-radius: 5px;
+  padding: 6px 12px; color: var(--gray); font-size: 0.78rem;
+  font-family: 'Barlow', sans-serif; font-weight: 600;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+  transition: border-color 0.15s, color 0.15s; text-decoration: none;
+}
+.btn-back:hover { border-color: var(--yellow); color: var(--yellow); }
+.btn-back svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+/* ── PAGE HEADER ── */
+.page-header { padding: 2rem 2rem 0; animation: fadeUp 0.5s 0.2s cubic-bezier(0.22,1,0.36,1) both; opacity: 0; }
+.page-header h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.9rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.02em; color: var(--white);
+}
+.page-header h1 span { color: var(--yellow); }
+.page-header p { font-size: 0.85rem; color: var(--gray); margin-top: 3px; }
+
+/* ── MAIN ── */
+.main { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+
+/* ── SEARCH BAR ── */
+.search-section {
+  background: var(--black-2); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; margin-bottom: 1.25rem;
+  animation: fadeUp 0.5s 0.3s cubic-bezier(0.22,1,0.36,1) both; opacity: 0;
+}
+.search-header {
+  background: var(--yellow); padding: 9px 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+.search-header svg { width: 14px; height: 14px; stroke: var(--black); fill: none; stroke-width: 2.5; }
+.search-header span {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.82rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--black);
+}
+.search-body { padding: 16px 18px; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+
+.search-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 160px; }
+.search-group label { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray); }
+.search-group input, .search-group select {
+  background: var(--black-3); border: 1.5px solid #333;
+  border-radius: 7px; padding: 9px 12px;
+  font-family: 'Barlow', sans-serif; font-size: 0.87rem; color: var(--white);
+  outline: none; transition: border-color 0.15s;
+}
+.search-group input:focus, .search-group select:focus { border-color: var(--yellow); }
+.search-group input::placeholder { color: #444; }
+.search-group select option { background: var(--black-3); }
+
+.btn-clear {
+  background: none; border: 1.5px solid #333; border-radius: 7px;
+  padding: 9px 16px; color: var(--gray);
+  font-family: 'Barlow', sans-serif; font-size: 0.82rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  cursor: pointer; transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap; align-self: flex-end;
+}
+.btn-clear:hover { border-color: #555; color: var(--gray-lt); }
+
+/* Stats row */
+.stats-row {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  animation: fadeUp 0.5s 0.4s cubic-bezier(0.22,1,0.36,1) both; opacity: 0;
+}
+.stat-pill {
+  background: var(--black-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.stat-pill .val {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.4rem; font-weight: 800; color: var(--yellow);
+}
+.stat-pill .lbl { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray); }
+
+/* ── TABLE ── */
+.table-card {
+  background: var(--black-2); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  animation: fadeUp 0.5s 0.45s cubic-bezier(0.22,1,0.36,1) both; opacity: 0;
+}
+.table-toolbar {
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.table-toolbar span {
+  font-size: 0.75rem; font-weight: 600; color: var(--gray);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.table-toolbar .count { color: var(--yellow-lt); font-weight: 700; }
+
+.btn-export {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid #333; border-radius: 6px;
+  padding: 6px 12px; color: var(--gray); font-size: 0.75rem;
+  font-family: 'Barlow', sans-serif; font-weight: 600;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-export:hover { border-color: var(--yellow); color: var(--yellow); }
+.btn-export svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+.table-wrap { overflow-x: auto; }
+.table-wrap::-webkit-scrollbar { height: 5px; }
+.table-wrap::-webkit-scrollbar-track { background: var(--black-3); }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--yellow); border-radius: 10px; }
+.table-wrap { scrollbar-width: thin; scrollbar-color: var(--yellow) var(--black-3); }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+thead tr { background: var(--black-3); }
+thead th {
+  padding: 10px 14px; text-align: left;
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.09em; color: var(--gray); white-space: nowrap;
+  border-bottom: 1px solid var(--border); cursor: pointer;
+  user-select: none; transition: color 0.15s;
+}
+thead th:hover { color: var(--yellow-lt); }
+thead th.sorted { color: var(--yellow); }
+thead th .sort-arrow { margin-left: 4px; opacity: 0.5; }
+thead th.sorted .sort-arrow { opacity: 1; }
+
+tbody tr { border-bottom: 1px solid #1C1C1C; transition: background 0.1s; }
+tbody tr:hover { background: rgba(255,194,0,0.03); }
+tbody td { padding: 10px 14px; color: var(--gray-lt); white-space: nowrap; }
+tbody td.code { font-family: 'Barlow Condensed', sans-serif; font-size: 0.95rem; font-weight: 700; color: var(--white); }
+tbody td.name { color: var(--gray-lt); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; padding: 2px 9px;
+  border-radius: 20px; font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.badge-yellow { background: rgba(255,194,0,0.12); color: var(--yellow); }
+.badge-blue   { background: rgba(52,152,219,0.12); color: #5DADE2; }
+.badge-purple { background: rgba(155,89,182,0.12); color: #BB8FCE; }
+.badge-gray   { background: rgba(136,136,136,0.1); color: var(--gray); }
+.badge-green  { background: rgba(46,204,113,0.12); color: var(--green); }
+
+/* highlight match */
+.hl { background: rgba(255,194,0,0.25); border-radius: 3px; padding: 0 2px; color: var(--white); }
+
+/* empty */
+.table-empty { text-align: center; padding: 3.5rem; color: var(--gray); }
+.table-empty svg { width: 40px; height: 40px; stroke: #333; fill: none; stroke-width: 1.5; margin-bottom: 12px; }
+.table-empty p { font-size: 0.88rem; }
+
+/* light theme */
+body.light {
+  --black: #F5F5F0; --black-2: #FFFFFF; --black-3: #EFEFEB;
+  --black-4: #E0E0DA; --white: #111111; --gray: #666666;
+  --gray-lt: #333333; --border: #DDDDDA;
+}
+body.light .topbar { background: #FFFFFF; }
+body.light .topbar-divider { background: #DDD; }
+body.light .search-group input,
+body.light .search-group select { color: #111; }
+body.light .table-wrap::-webkit-scrollbar-track { background: #E0E0DA; }
+
+.btn-theme {
+  width: 34px; height: 34px; border-radius: 7px; border: 1px solid var(--border);
+  background: var(--black-3); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.btn-theme:hover { border-color: var(--yellow); background: rgba(255,194,0,0.08); }
+.btn-theme svg { width: 15px; height: 15px; stroke: var(--gray); fill: none; stroke-width: 2; }
+.btn-theme:hover svg { stroke: var(--yellow); }
+
+footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: #333; border-top: 1px solid #1A1A1A; }
+
+@media (max-width: 700px) { .main { padding: 1rem; } .topbar { padding: 0 1rem; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <img src="Imagenes/MADISA-logo-vector1.png" alt="MADISA CAT">
+    <div class="topbar-divider"></div>
+    <span class="topbar-title">Equivalencias SOS</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-theme" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="btn-back" href="compras.html">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Portal
+    </a>
+  </div>
+</header>
+
+<div class="page-header">
+  <h1>Equivalencias <span>SOS</span></h1>
+  <p>Consulta de códigos SOS entre sistemas DBS, NAXT y LP3</p>
+</div>
+
+<main class="main">
+
+  <!-- BUSCADOR -->
+  <div class="search-section">
+    <div class="search-header">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Búsqueda y filtros</span>
+    </div>
+    <div class="search-body">
+      <div class="search-group" style="flex:2;min-width:200px">
+        <label>Búsqueda general</label>
+        <input type="text" id="q" placeholder="Código o nombre en cualquier sistema..." oninput="filtrar()">
+      </div>
+      <div class="search-group">
+        <label>SOS DBS</label>
+        <input type="text" id="fDBS" placeholder="Ej. 000" oninput="filtrar()">
+      </div>
+      <div class="search-group">
+        <label>SOS NAXT</label>
+        <input type="text" id="fNAXT" placeholder="Ej. 141" oninput="filtrar()">
+      </div>
+      <div class="search-group">
+        <label>LP3</label>
+        <input type="text" id="fLP3" placeholder="Ej. 0A1" oninput="filtrar()">
+      </div>
+      <div class="search-group">
+        <label>GO LIVE MDI</label>
+        <select id="fGoLive" onchange="filtrar()">
+          <option value="">Todos</option>
+          <option value="NO LLEVA">No lleva</option>
+          <option value="VARIOS">Varios</option>
+        </select>
+      </div>
+      <button class="btn-clear" onclick="limpiar()">Limpiar</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-pill">
+      <div>
+        <div class="val" id="statTotal">0</div>
+        <div class="lbl">Total registros</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <div>
+        <div class="val" id="statFiltrados">0</div>
+        <div class="lbl">Resultados</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <div>
+        <div class="val" id="statDBS">0</div>
+        <div class="lbl">Códigos DBS únicos</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <div>
+        <div class="val" id="statNAXT">0</div>
+        <div class="lbl">Códigos NAXT únicos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA -->
+  <div class="table-card">
+    <div class="table-toolbar">
+      <span>Mostrando <span class="count" id="countLabel">0</span> registros</span>
+      <button class="btn-export" onclick="exportarCSV()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar CSV
+      </button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="ordenar('sosDBS')"  data-col="sosDBS">SOS DBS <span class="sort-arrow">↕</span></th>
+            <th onclick="ordenar('nomDBS')"  data-col="nomDBS">Nombre DBS <span class="sort-arrow">↕</span></th>
+            <th onclick="ordenar('sosNAXT')" data-col="sosNAXT">SOS NAXT <span class="sort-arrow">↕</span></th>
+            <th onclick="ordenar('nomNAXT')" data-col="nomNAXT">Nombre NAXT <span class="sort-arrow">↕</span></th>
+            <th onclick="ordenar('nomLP3')"  data-col="nomLP3">Nombre LP3 <span class="sort-arrow">↕</span></th>
+            <th onclick="ordenar('lp3')"     data-col="lp3">LP3 <span class="sort-arrow">↕</span></th>
+            <th onclick="ordenar('goLive')"  data-col="goLive">GO LIVE MDI <span class="sort-arrow">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="table-empty" id="emptyState" style="display:none">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <p>No se encontraron equivalencias con los filtros aplicados.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>© 2026 — MADISA Portal de Compras</footer>
+
+<script>
+const DATA = [
+  {sosDBS:"000",nomDBS:"Cat Refacciones",sosNAXT:"000",nomNAXT:"Cat Refacciones",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"P-007051"},
+  {sosDBS:"001",nomDBS:"Cat Kits",sosNAXT:"001",nomNAXT:"Cat Kits",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"NO LLEVA"},
+  {sosDBS:"002",nomDBS:"Cat Refacciones por Maq",sosNAXT:"002",nomNAXT:"Cat Refacciones por Maq",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"P-013567"},
+  {sosDBS:"010",nomDBS:"Minnpar",sosNAXT:"003",nomNAXT:"Garantías Extendidas",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"VARIOS"},
+  {sosDBS:"006",nomDBS:"Cat Mangueras",sosNAXT:"004",nomNAXT:"Cat Mangueras",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"NO LLEVA"},
+  {sosDBS:"070",nomDBS:"Componentes Intercambio",sosNAXT:"005",nomNAXT:"Componentes Intercambio",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"NO LLEVA"},
+  {sosDBS:"076",nomDBS:"Cat Semi Nuevas",sosNAXT:"006",nomNAXT:"Seminuevas y Mineria",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"NO LLEVA"},
+  {sosDBS:"003",nomDBS:"Componentes Minería",sosNAXT:"006",nomNAXT:"Seminuevas y Mineria",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"NO LLEVA"},
+  {sosDBS:"470",nomDBS:"Kress",sosNAXT:"007",nomNAXT:"Kress",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"P-020774"},
+  {sosDBS:"045",nomDBS:"Cat Motores MWM",sosNAXT:"036",nomNAXT:"Cat Motores MWM",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"P-007272"},
+  {sosDBS:"250",nomDBS:"Cummins",sosNAXT:"051",nomNAXT:"Cummins",nomLP3:"AA2.- Caterpillar EPG",lp3:"AA2",goLive:"P-017814"},
+  {sosDBS:"224",nomDBS:"Generadores Madisa",sosNAXT:"076",nomNAXT:"Himoinsa",nomLP3:"HM1.- Madisa Generadores",lp3:"HM1",goLive:"P-018073"},
+  {sosDBS:"830",nomDBS:"Mobil Lubricantes",sosNAXT:"091",nomNAXT:"Adblue",nomLP3:"1A1.- Mobil Lubricantes",lp3:"1A1",goLive:"P-001624"},
+  {sosDBS:"031",nomDBS:"Yara",sosNAXT:"091",nomNAXT:"Adblue",nomLP3:"1A1.- Mobil Lubricantes",lp3:"1A1",goLive:"P-001624"},
+  {sosDBS:"030",nomDBS:"Cat Lubricantes",sosNAXT:"106",nomNAXT:"Cat Lubricantes",nomLP3:"1A2.- Cat Lubricantes",lp3:"1A2",goLive:"P-000282"},
+  {sosDBS:"035",nomDBS:"Mobil lubricantes",sosNAXT:"107",nomNAXT:"Mobil lubricantes",nomLP3:"1A2.- Cat Lubricantes",lp3:"1A2",goLive:"P-004436"},
+  {sosDBS:"036",nomDBS:"Chevron Lubricantes",sosNAXT:"121",nomNAXT:"Chevron Lubricantes",nomLP3:"1A3.- Otros Lubricantes",lp3:"1A3",goLive:"P-021757"},
+  {sosDBS:"730",nomDBS:"Otras Lubricantes MXN",sosNAXT:"122",nomNAXT:"Otras Lubricantes",nomLP3:"1A3.- Otros Lubricantes",lp3:"1A3",goLive:"P-000385"},
+  {sosDBS:"330",nomDBS:"Donaldson Filtros",sosNAXT:"141",nomNAXT:"Baldwin",nomLP3:"1A4.- Otros Filtros",lp3:"1A4",goLive:"P-000385"},
+  {sosDBS:"330",nomDBS:"Donaldson Filtros",sosNAXT:"142",nomNAXT:"Filtros Donaldson",nomLP3:"1A4.- Otros Filtros",lp3:"1A4",goLive:"P-000385"},
+  {sosDBS:"731",nomDBS:"Otros Filtros Essex USD",sosNAXT:"143",nomNAXT:"Otros Filtros (USD)",nomLP3:"1A4.- Otros Filtros",lp3:"1A4",goLive:"P-000385"},
+  {sosDBS:"733",nomDBS:"Otros Filtros USD",sosNAXT:"143",nomNAXT:"Otros Filtros (USD)",nomLP3:"1A4.- Otros Filtros",lp3:"1A4",goLive:"P-000385"},
+  {sosDBS:"732",nomDBS:"Otros Filtros Essex MXN",sosNAXT:"144",nomNAXT:"Otros Filtros (MXN)",nomLP3:"1A4.- Otros Filtros",lp3:"1A4",goLive:"P-000385"},
+  {sosDBS:"734",nomDBS:"Otros Filtros MXN",sosNAXT:"144",nomNAXT:"Otros Filtros (MXN)",nomLP3:"1A4.- Otros Filtros",lp3:"1A4",goLive:"P-000385"},
+  {sosDBS:"171",nomDBS:"Michelin USD",sosNAXT:"186",nomNAXT:"Michelin",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-019775"},
+  {sosDBS:"172",nomDBS:"Goodyear MXN",sosNAXT:"187",nomNAXT:"Goodyear (MXN)",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-010567"},
+  {sosDBS:"173",nomDBS:"Goodyear USD",sosNAXT:"188",nomNAXT:"Goodyear (USD)",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-010567"},
+  {sosDBS:"210",nomDBS:"Yokohama MXN",sosNAXT:"189",nomNAXT:"Yokohama (MXN)",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-016793"},
+  {sosDBS:"211",nomDBS:"Yokohama USD",sosNAXT:"190",nomNAXT:"Yokohama (USD)",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-016793"},
+  {sosDBS:"212",nomDBS:"Pirelli MXN",sosNAXT:"191",nomNAXT:"Pirelli",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-014441"},
+  {sosDBS:"216",nomDBS:"Titan MXN",sosNAXT:"192",nomNAXT:"Titan (MXN)",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-020003"},
+  {sosDBS:"217",nomDBS:"Titan USD",sosNAXT:"193",nomNAXT:"Titan (USD)",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-020003"},
+  {sosDBS:"218",nomDBS:"JK Tornel MXN",sosNAXT:"194",nomNAXT:"JK Tornel",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-013292"},
+  {sosDBS:"371",nomDBS:"Camso USD",sosNAXT:"195",nomNAXT:"Camso",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-000952"},
+  {sosDBS:"375",nomDBS:"Trelleborg USD",sosNAXT:"196",nomNAXT:"Trelleborg",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-002953"},
+  {sosDBS:"411",nomDBS:"Road Scenery USD",sosNAXT:"197",nomNAXT:"Aeneas",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-010275"},
+  {sosDBS:"832",nomDBS:"Otras Llantas USD",sosNAXT:"198",nomNAXT:"Otras Llantas (USD)",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"VARIOS"},
+  {sosDBS:"832",nomDBS:"Otras Llantas USD",sosNAXT:"199",nomNAXT:"Triangle",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-002781"},
+  {sosDBS:"832",nomDBS:"Otras Llantas USD",sosNAXT:"200",nomNAXT:"Techking",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-019107"},
+  {sosDBS:"832",nomDBS:"Otras Llantas USD",sosNAXT:"201",nomNAXT:"Bridgestone",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-021958"},
+  {sosDBS:"415",nomDBS:"Aeolus Tire",sosNAXT:"202",nomNAXT:"Aeolus",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-004392"},
+  {sosDBS:"739",nomDBS:"Continental Tire de México",sosNAXT:"203",nomNAXT:"Continental",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-003373"},
+  {sosDBS:"831",nomDBS:"Otras llantas MXN",sosNAXT:"204",nomNAXT:"Otras Llantas (MXN)",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"VARIOS"},
+  {sosDBS:"",nomDBS:"",sosNAXT:"205",nomNAXT:"Ascenso",nomLP3:"2A1.- Llantas",lp3:"2A1",goLive:"P-019480"},
+  {sosDBS:"101",nomDBS:"Hoist",sosNAXT:"286",nomNAXT:"Hoist",nomLP3:"HT1.- Hoist Montacargas",lp3:"HT1",goLive:"P-015647"},
+  {sosDBS:"100",nomDBS:"Cascade",sosNAXT:"299",nomNAXT:"Cascade",nomLP3:"MT1.- MCFA Montacargas",lp3:"MT1",goLive:"P-011710"},
+  {sosDBS:"",nomDBS:"",sosNAXT:"300",nomNAXT:"MLA Logisnext",nomLP3:"MT1.- MCFA Montacargas",lp3:"MT1",goLive:"P-018886"},
+  {sosDBS:"102",nomDBS:"Combilift USA LLC",sosNAXT:"301",nomNAXT:"Combilift",nomLP3:"MT9.- Otros Montacargas",lp3:"MT9",goLive:"P-018414"},
+  {sosDBS:"555",nomDBS:"MaxLift Montacargas",sosNAXT:"302",nomNAXT:"MaxLift",nomLP3:"MT9.- Otros Montacargas",lp3:"MT9",goLive:"P-007641"},
+  {sosDBS:"913",nomDBS:"Terberg",sosNAXT:"321",nomNAXT:"Terberg",nomLP3:"TB1.- Terberg Tractores Term.",lp3:"TB1",goLive:"P-017224"},
+  {sosDBS:"918",nomDBS:"MAN VW",sosNAXT:"351",nomNAXT:"MAN VW",nomLP3:"MW1.- MAN VW Camiones",lp3:"MW1",goLive:"P-003257"},
+  {sosDBS:"550",nomDBS:"SEM",sosNAXT:"356",nomNAXT:"SEM",nomLP3:"SS1.- SEM Maquinaria",lp3:"SS1",goLive:"P-020662"},
+  {sosDBS:"915",nomDBS:"Rockmore",sosNAXT:"361",nomNAXT:"Rockmore",nomLP3:"AA3.- Caterpillar Minería",lp3:"AA3",goLive:"P-008194"},
+  {sosDBS:"911",nomDBS:"Epiroc",sosNAXT:"381",nomNAXT:"Epiroc",nomLP3:"ER1.- Epiroc Perforadoras",lp3:"ER1",goLive:"P-010264"},
+  {sosDBS:"800",nomDBS:"Resemin",sosNAXT:"386",nomNAXT:"Resemin",nomLP3:"RS1.- Resemin Jumbos",lp3:"RS1",goLive:"P-012118"},
+  {sosDBS:"322",nomDBS:"Nilfisk",sosNAXT:"406",nomNAXT:"Nilfisk",nomLP3:"AD1.- Nilfisk Barredoras",lp3:"AD1",goLive:"P-021376"},
+  {sosDBS:"515",nomDBS:"Donaldson Colectores",sosNAXT:"411",nomNAXT:"Donaldson Colectores",nomLP3:"DT1.- Donaldson Colectores",lp3:"DT1",goLive:"P-000227"},
+  {sosDBS:"251",nomDBS:"Sullair",sosNAXT:"416",nomNAXT:"Sullair",nomLP3:"SA1.- Sullair Compresores",lp3:"SA1",goLive:"P-000021"},
+  {sosDBS:"113",nomDBS:"IR Tools",sosNAXT:"421",nomNAXT:"IR Tools",nomLP3:"SA9.- Otros Compresores",lp3:"SA9",goLive:"NO LLEVA"},
+  {sosDBS:"151",nomDBS:"IR Air Compressors",sosNAXT:"426",nomNAXT:"IR Compressors",nomLP3:"SA9.- Otros Compresores",lp3:"SA9",goLive:"P-012290"},
+  {sosDBS:"333",nomDBS:"Atlas Copco",sosNAXT:"427",nomNAXT:"Atlas Copco",nomLP3:"SA9.- Otros Compresores",lp3:"SA9",goLive:"P-015237"},
+  {sosDBS:"567",nomDBS:"Cipsa Concreto",sosNAXT:"441",nomNAXT:"Cipsa",nomLP3:"CI1.- Cipsa Concreto",lp3:"CI1",goLive:"P-016343"},
+  {sosDBS:"081",nomDBS:"Cipsa Mxn",sosNAXT:"441",nomNAXT:"Cipsa",nomLP3:"CI1.- Cipsa Concreto",lp3:"CI1",goLive:"P-016343"},
+  {sosDBS:"082",nomDBS:"Cipsa Usd",sosNAXT:"441",nomNAXT:"Cipsa",nomLP3:"CI1.- Cipsa Concreto",lp3:"CI1",goLive:"P-016343"},
+  {sosDBS:"950",nomDBS:"Cipsa Equipos L.",sosNAXT:"441",nomNAXT:"Cipsa",nomLP3:"CI1.- Cipsa Concreto",lp3:"CI1",goLive:"P-016343"},
+  {sosDBS:"955",nomDBS:"Cipsa",sosNAXT:"441",nomNAXT:"Cipsa",nomLP3:"CI1.- Cipsa Concreto",lp3:"CI1",goLive:"P-016343"},
+  {sosDBS:"096",nomDBS:"Genie",sosNAXT:"446",nomNAXT:"Genie",nomLP3:"GI1.- Genie Plataformas",lp3:"GI1",goLive:"P-015327"},
+  {sosDBS:"092",nomDBS:"Haulotte",sosNAXT:"451",nomNAXT:"Haulotte",nomLP3:"HO1.- Haullotte Plataformas",lp3:"HO1",goLive:"P-015410"},
+  {sosDBS:"705",nomDBS:"Husqvrana MXN",sosNAXT:"456",nomNAXT:"Husqvarna",nomLP3:"HQ1.- Husqvarna Construcción",lp3:"HQ1",goLive:"P-009943"},
+  {sosDBS:"081",nomDBS:"Husqvrana",sosNAXT:"456",nomNAXT:"Husqvarna",nomLP3:"HQ1.- Husqvarna Construcción",lp3:"HQ1",goLive:"P-009943"},
+  {sosDBS:"082",nomDBS:"Husqvrana",sosNAXT:"456",nomNAXT:"Husqvarna",nomLP3:"HQ1.- Husqvarna Construcción",lp3:"HQ1",goLive:"P-009943"},
+  {sosDBS:"950",nomDBS:"Husqvrana",sosNAXT:"456",nomNAXT:"Husqvarna",nomLP3:"HQ1.- Husqvarna Construcción",lp3:"HQ1",goLive:"P-009943"},
+  {sosDBS:"955",nomDBS:"Husqvrana",sosNAXT:"456",nomNAXT:"Husqvarna",nomLP3:"HQ1.- Husqvarna Construcción",lp3:"HQ1",goLive:"P-009943"},
+  {sosDBS:"700",nomDBS:"Husqvrana USD",sosNAXT:"456",nomNAXT:"Husqvarna",nomLP3:"HQ1.- Husqvarna Construcción",lp3:"HQ1",goLive:"P-009943"},
+  {sosDBS:"091",nomDBS:"Zoomlion",sosNAXT:"461",nomNAXT:"Zoomlion",nomLP3:"HZ1.- Zoomlion Plataformas",lp3:"HZ1",goLive:"P-019046"},
+  {sosDBS:"355",nomDBS:"Wacker Neuson USD",sosNAXT:"471",nomNAXT:"Wacker Neuson",nomLP3:"WK1.- Wacker Construcción",lp3:"WK1",goLive:"P-005884"},
+  {sosDBS:"082",nomDBS:"Wacker",sosNAXT:"471",nomNAXT:"Wacker Neuson",nomLP3:"WK1.- Wacker Construcción",lp3:"WK1",goLive:"P-005884"},
+  {sosDBS:"950",nomDBS:"Wacker",sosNAXT:"471",nomNAXT:"Wacker Neuson",nomLP3:"WK1.- Wacker Construcción",lp3:"WK1",goLive:"P-005884"},
+  {sosDBS:"081",nomDBS:"Mpower",sosNAXT:"491",nomNAXT:"Equipo ligero (MXN)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"081",nomDBS:"Hyundai",sosNAXT:"491",nomNAXT:"Equipo ligero (MXN)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"081",nomDBS:"Pemsa",sosNAXT:"491",nomNAXT:"Equipo ligero (MXN)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"081",nomDBS:"Makita",sosNAXT:"491",nomNAXT:"Equipo ligero (MXN)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"955",nomDBS:"Mpower",sosNAXT:"491",nomNAXT:"Equipo ligero (MXN)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"955",nomDBS:"Hyundai",sosNAXT:"491",nomNAXT:"Equipo ligero (MXN)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"955",nomDBS:"Pemsa",sosNAXT:"491",nomNAXT:"Equipo ligero (MXN)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"955",nomDBS:"Makita",sosNAXT:"491",nomNAXT:"Equipo ligero (MXN)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"082",nomDBS:"Shindaiwa",sosNAXT:"492",nomNAXT:"Equipo ligero (USD)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"950",nomDBS:"Shindaiwa",sosNAXT:"492",nomNAXT:"Equipo ligero (USD)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"950",nomDBS:"Makita",sosNAXT:"492",nomNAXT:"Equipo ligero (USD)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"950",nomDBS:"Rackusa",sosNAXT:"492",nomNAXT:"Equipo ligero (USD)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"950",nomDBS:"Weber",sosNAXT:"492",nomNAXT:"Equipo ligero (USD)",nomLP3:"XA2.- Otros Equipos Retail",lp3:"XA2",goLive:"VARIOS"},
+  {sosDBS:"160",nomDBS:"Doosan Portátiles",sosNAXT:"541",nomNAXT:"Doosan",nomLP3:"SA9.- Otros Compresores",lp3:"SA9",goLive:"P-017768"},
+  {sosDBS:"161",nomDBS:"IR Construction",sosNAXT:"542",nomNAXT:"IR Portátiles",nomLP3:"SA9.- Otros Compresores",lp3:"SA9",goLive:"NO LLEVA"},
+  {sosDBS:"919",nomDBS:"Margui",sosNAXT:"576",nomNAXT:"Margui",nomLP3:"AR1.- Otros Trituración Y Concreto",lp3:"AR1",goLive:"P-007560"},
+  {sosDBS:"912",nomDBS:"Astec",sosNAXT:"591",nomNAXT:"Astec",nomLP3:"AS1.- Astec Trituración",lp3:"AS1",goLive:"P-015886"},
+  {sosDBS:"667",nomDBS:"Cifa",sosNAXT:"596",nomNAXT:"Cifa",nomLP3:"CJ1.- Cifa Concreto",lp3:"CJ1",goLive:"P-001175"},
+  {sosDBS:"810",nomDBS:"Carmix",sosNAXT:"601",nomNAXT:"Carmix",nomLP3:"CX1.- Carmix Concreto",lp3:"CX1",goLive:"P-019083"},
+  {sosDBS:"565",nomDBS:"McCloskey",sosNAXT:"611",nomNAXT:"McCloskey",nomLP3:"MY1.- McCloskey Trituración",lp3:"MY1",goLive:"P-009031"},
+  {sosDBS:"094",nomDBS:"JLG",sosNAXT:"631",nomNAXT:"JLG",nomLP3:"JL1.- JLG Telehandlers",lp3:"JL1",goLive:"P-021707"},
+  {sosDBS:"098",nomDBS:"Link Belt",sosNAXT:"636",nomNAXT:"Link Belt",nomLP3:"LB1.- Link Belt Grúas",lp3:"LB1",goLive:"P-011125"},
+  {sosDBS:"233",nomDBS:"Manitex",sosNAXT:"641",nomNAXT:"Manitex",nomLP3:"MX1.- Manitex Grúas",lp3:"MX1",goLive:"P-006370"},
+  {sosDBS:"223",nomDBS:"Palfinger",sosNAXT:"646",nomNAXT:"Palfinger",nomLP3:"PA1.- Palfinger Grúas",lp3:"PA1",goLive:"P-003117"},
+  {sosDBS:"566",nomDBS:"Weiler",sosNAXT:"647",nomNAXT:"Weiler",nomLP3:"PA1.- Palfinger Grúas",lp3:"PA1",goLive:"P-008829"},
+  {sosDBS:"568",nomDBS:"Hiab",sosNAXT:"648",nomNAXT:"Hiab",nomLP3:"PA1.- Palfinger Grúas",lp3:"PA1",goLive:"P-014505"},
+  {sosDBS:"220",nomDBS:"Terex",sosNAXT:"653",nomNAXT:"Terex",nomLP3:"TR1.- Terex Grúas",lp3:"TR1",goLive:"NO LLEVA"},
+  {sosDBS:"385",nomDBS:"CNH QRO MXN",sosNAXT:"658",nomNAXT:"CNH Qro (MXN)",nomLP3:"NH1.- CNH Agrícola",lp3:"NH1",goLive:"P-010833"},
+  {sosDBS:"485",nomDBS:"CNH QRO USD",sosNAXT:"659",nomNAXT:"CNH Qro (USD)",nomLP3:"NH1.- CNH Agrícola",lp3:"NH1",goLive:"P-010833"},
+  {sosDBS:"585",nomDBS:"CNH EXT USD",sosNAXT:"660",nomNAXT:"CNH Ext (USD)",nomLP3:"NH1.- CNH Agrícola",lp3:"NH1",goLive:"P-010833"},
+  {sosDBS:"390",nomDBS:"AMACSA",sosNAXT:"668",nomNAXT:"Amacsa",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-000108"},
+  {sosDBS:"390",nomDBS:"AMSSA",sosNAXT:"669",nomNAXT:"Amssa",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-004192"},
+  {sosDBS:"390",nomDBS:"Aspross Semillas",sosNAXT:"670",nomNAXT:"Semillas Aspross",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-009254"},
+  {sosDBS:"390",nomDBS:"Clavos Nacionales",sosNAXT:"671",nomNAXT:"Clavos Nacionales",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-002661"},
+  {sosDBS:"390",nomDBS:"DURABLE",sosNAXT:"672",nomNAXT:"Durable",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-000101"},
+  {sosDBS:"390",nomDBS:"FAMAQ",sosNAXT:"673",nomNAXT:"Famaq",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-010829"},
+  {sosDBS:"390",nomDBS:"Industrias Cabrera",sosNAXT:"674",nomNAXT:"Industrias Cabrera",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-000107"},
+  {sosDBS:"390",nomDBS:"MOLINOS AZTECA",sosNAXT:"675",nomNAXT:"Molinos Azteca",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-018474"},
+  {sosDBS:"390",nomDBS:"Sembradoras Dobladenses",sosNAXT:"676",nomNAXT:"Sembradoras Dobladenses",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-014197"},
+  {sosDBS:"390",nomDBS:"Semillas Ceres",sosNAXT:"677",nomNAXT:"Semillas Ceres",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-005723"},
+  {sosDBS:"390",nomDBS:"Swissmex",sosNAXT:"678",nomNAXT:"Swissmex",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-000008"},
+  {sosDBS:"390",nomDBS:"Tecnomec",sosNAXT:"679",nomNAXT:"Tecnomec",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-021706"},
+  {sosDBS:"390",nomDBS:"Toldos Guadalajara",sosNAXT:"680",nomNAXT:"Toldos Guadalajara",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-008445"},
+  {sosDBS:"390",nomDBS:"TOYO",sosNAXT:"681",nomNAXT:"Toyo",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-021725"},
+  {sosDBS:"490",nomDBS:"Allmand",sosNAXT:"682",nomNAXT:"Allmand",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-014116"},
+  {sosDBS:"490",nomDBS:"Goodman",sosNAXT:"683",nomNAXT:"Goodman",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-017882"},
+  {sosDBS:"490",nomDBS:"K-Line",sosNAXT:"684",nomNAXT:"K- Line",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-014335"},
+  {sosDBS:"490",nomDBS:"Poliexcel",sosNAXT:"685",nomNAXT:"Poliexcel",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-013569"},
+  {sosDBS:"490",nomDBS:"Sysmap",sosNAXT:"686",nomNAXT:"Sysmap",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-004255"},
+  {sosDBS:"490",nomDBS:"Terramak",sosNAXT:"687",nomNAXT:"Terramak",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-000283"},
+  {sosDBS:"562",nomDBS:"Wilcox",sosNAXT:"688",nomNAXT:"Wilcox",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-002073"},
+  {sosDBS:"390",nomDBS:"Juscafresa",sosNAXT:"689",nomNAXT:"Juscafresa",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-010586"},
+  {sosDBS:"077",nomDBS:"Miscelaneos y Herramientas MXN",sosNAXT:"738",nomNAXT:"Miscelaneos y Herramientas Interno",nomLP3:"XA1.- Artículos Retail",lp3:"XA1",goLive:"VARIOS"},
+  {sosDBS:"078",nomDBS:"Misceláneos y Herramientas Retail MXN",sosNAXT:"739",nomNAXT:"Misceláneos y Herramientas Retail (MXN)",nomLP3:"XA1.- Artículos Retail",lp3:"XA1",goLive:"VARIOS"},
+  {sosDBS:"079",nomDBS:"Misceláneos y Herramientas Retail USD",sosNAXT:"740",nomNAXT:"Misceláneos y Herramientas Retail (USD)",nomLP3:"XA1.- Artículos Retail",lp3:"XA1",goLive:"VARIOS"},
+  {sosDBS:"500",nomDBS:"Promocionales Madisa MXN",sosNAXT:"741",nomNAXT:"Promocionales Interno (MXN)",nomLP3:"XA1.- Artículos Retail",lp3:"XA1",goLive:"VARIOS"},
+  {sosDBS:"501",nomDBS:"Promocionales Madisa USD",sosNAXT:"742",nomNAXT:"Promocionales Interno (USD)",nomLP3:"XA1.- Artículos Retail",lp3:"XA1",goLive:"VARIOS"},
+  {sosDBS:"511",nomDBS:"Promocionales Retail MXN",sosNAXT:"743",nomNAXT:"Promocionales Retail (MXN)",nomLP3:"XA1.- Artículos Retail",lp3:"XA1",goLive:"VARIOS"},
+  {sosDBS:"510",nomDBS:"Promocionales Retail USD",sosNAXT:"744",nomNAXT:"Promocionales Retail (USD)",nomLP3:"XA1.- Artículos Retail",lp3:"XA1",goLive:"VARIOS"},
+  {sosDBS:"040",nomDBS:"Bitelli",sosNAXT:"808",nomNAXT:"Bitelli",nomLP3:"AR1.- Otros Trituración Y Concreto",lp3:"AR1",goLive:"P-018735"},
+  {sosDBS:"040",nomDBS:"Dega",sosNAXT:"809",nomNAXT:"Dega",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-015938"},
+  {sosDBS:"040",nomDBS:"Hkx",sosNAXT:"810",nomNAXT:"Hkx",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-010726"},
+  {sosDBS:"040",nomDBS:"Noram Weiler",sosNAXT:"811",nomNAXT:"Noram Weiler",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-020315"},
+  {sosDBS:"040",nomDBS:"Olympian",sosNAXT:"812",nomNAXT:"Olympian",nomLP3:"AA2.- Caterpillar EPG",lp3:"AA2",goLive:"P-011050"},
+  {sosDBS:"050",nomDBS:"Manuales y Folletos",sosNAXT:"813",nomNAXT:"Literatura, Manuales y Folletos",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"P-020104"},
+  {sosDBS:"050",nomDBS:"Literatura MLA",sosNAXT:"813",nomNAXT:"Literatura, Manuales y Folletos",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"P-020104"},
+  {sosDBS:"050",nomDBS:"Midland",sosNAXT:"813",nomNAXT:"Literatura, Manuales y Folletos",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"P-020104"},
+  {sosDBS:"055",nomDBS:"Licencias Y Suscripciones",sosNAXT:"815",nomNAXT:"Licencias Y Suscripciones",nomLP3:"0A1.- Cat Refacciones",lp3:"0A1",goLive:"P-020104"},
+  {sosDBS:"005",nomDBS:"Henkel Capital",sosNAXT:"816",nomNAXT:"Loctite",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-004435"},
+  {sosDBS:"075",nomDBS:"Partes Usadas",sosNAXT:"817",nomNAXT:"Partes Usadas",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"NO LLEVA"},
+  {sosDBS:"777",nomDBS:"Material Dañado",sosNAXT:"818",nomNAXT:"Material Dañado",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"NO LLEVA"},
+  {sosDBS:"044",nomDBS:"Alternos USD Importación",sosNAXT:"819",nomNAXT:"Barras 4N",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-000294"},
+  {sosDBS:"044",nomDBS:"Alternos USD Importación",sosNAXT:"820",nomNAXT:"Brunner & Lay",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-016266"},
+  {sosDBS:"060",nomDBS:"Otras Partes MXN",sosNAXT:"821",nomNAXT:"Cordex",nomLP3:"NH9.- Otros Agrícola",lp3:"NH9",goLive:"P-001992"},
+  {sosDBS:"826",nomDBS:"Otras Partes USD Nacional",sosNAXT:"822",nomNAXT:"Boart Long Year",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-013474"},
+  {sosDBS:"826",nomDBS:"Otras Partes USD Nacional",sosNAXT:"823",nomNAXT:"Komatsu",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-014996"},
+  {sosDBS:"731",nomDBS:'DS "K"',sosNAXT:"823",nomNAXT:"Komatsu",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-014996"},
+  {sosDBS:"826",nomDBS:"Otras Partes USD Nacional",sosNAXT:"824",nomNAXT:"Alpha",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-007267"},
+  {sosDBS:"826",nomDBS:"Otras Partes USD Nacional",sosNAXT:"825",nomNAXT:"Voltruck",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-017031"},
+  {sosDBS:"826",nomDBS:"Otras Partes USD Nacional",sosNAXT:"826",nomNAXT:"Haro Rent",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"P-002533"},
+  {sosDBS:"060",nomDBS:"Otras Partes MXN",sosNAXT:"827",nomNAXT:"Otras Partes (MXN)",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"VARIOS"},
+  {sosDBS:"826",nomDBS:"Otras Partes USD Nacional",sosNAXT:"828",nomNAXT:"Otras Partes (USD)",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"VARIOS"},
+  {sosDBS:"044",nomDBS:"Alternos USD Importación",sosNAXT:"828",nomNAXT:"Otras Partes (USD)",nomLP3:"ZZZ.- Otros Productos",lp3:"ZZZ",goLive:"VARIOS"},
+];
+
+let filtered = [...DATA];
+let sortCol = '';
+let sortAsc = true;
+
+// Llenar select GO LIVE dinámicamente
+const goLiveVals = [...new Set(DATA.map(d => d.goLive).filter(Boolean))].sort();
+const sel = document.getElementById('fGoLive');
+goLiveVals.forEach(v => {
+  if (v !== 'NO LLEVA' && v !== 'VARIOS') {
+    const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o);
+  }
+});
+
+function hl(text, q) {
+  if (!q || !text) return text || '—';
+  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return text.replace(re, '<span class="hl">$1</span>');
+}
+
+function badgeGoLive(v) {
+  if (!v) return '<span class="badge badge-gray">—</span>';
+  if (v === 'NO LLEVA') return '<span class="badge badge-gray">No lleva</span>';
+  if (v === 'VARIOS')   return '<span class="badge badge-blue">Varios</span>';
+  return `<span class="badge badge-green">${v}</span>`;
+}
+
+function badgeLP3(v) {
+  if (!v) return '<span class="badge badge-gray">—</span>';
+  return `<span class="badge badge-yellow">${v}</span>`;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  const q = document.getElementById('q').value.trim();
+
+  document.getElementById('countLabel').textContent = filtered.length;
+  document.getElementById('statFiltrados').textContent = filtered.length;
+
+  if (!filtered.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td class="code">${r.sosDBS ? hl(r.sosDBS, q) : '<span style="color:#444">—</span>'}</td>
+      <td class="name">${hl(r.nomDBS, q)}</td>
+      <td class="code">${hl(r.sosNAXT, q)}</td>
+      <td class="name">${hl(r.nomNAXT, q)}</td>
+      <td style="color:var(--gray)">${hl(r.nomLP3, q)}</td>
+      <td>${badgeLP3(r.lp3)}</td>
+      <td>${badgeGoLive(r.goLive)}</td>
+    </tr>
+  `).join('');
+}
+
+function filtrar() {
+  const q      = document.getElementById('q').value.trim().toLowerCase();
+  const fDBS   = document.getElementById('fDBS').value.trim().toLowerCase();
+  const fNAXT  = document.getElementById('fNAXT').value.trim().toLowerCase();
+  const fLP3   = document.getElementById('fLP3').value.trim().toLowerCase();
+  const fGL    = document.getElementById('fGoLive').value;
+
+  filtered = DATA.filter(r => {
+    const matchQ = !q || [r.sosDBS, r.nomDBS, r.sosNAXT, r.nomNAXT, r.nomLP3, r.lp3, r.goLive]
+      .some(v => v && v.toLowerCase().includes(q));
+    const matchDBS  = !fDBS  || (r.sosDBS  && r.sosDBS.toLowerCase().includes(fDBS));
+    const matchNAXT = !fNAXT || (r.sosNAXT && r.sosNAXT.toLowerCase().includes(fNAXT));
+    const matchLP3  = !fLP3  || (r.lp3     && r.lp3.toLowerCase().includes(fLP3));
+    const matchGL   = !fGL   || r.goLive === fGL;
+    return matchQ && matchDBS && matchNAXT && matchLP3 && matchGL;
+  });
+
+  if (sortCol) aplicarOrden();
+  renderTable();
+}
+
+function limpiar() {
+  ['q','fDBS','fNAXT','fLP3'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fGoLive').value = '';
+  filtrar();
+}
+
+function ordenar(col) {
+  if (sortCol === col) { sortAsc = !sortAsc; }
+  else { sortCol = col; sortAsc = true; }
+  document.querySelectorAll('thead th').forEach(th => {
+    th.classList.remove('sorted');
+    th.querySelector('.sort-arrow').textContent = '↕';
+  });
+  const th = document.querySelector(`[data-col="${col}"]`);
+  th.classList.add('sorted');
+  th.querySelector('.sort-arrow').textContent = sortAsc ? '↑' : '↓';
+  aplicarOrden();
+  renderTable();
+}
+
+function aplicarOrden() {
+  filtered.sort((a, b) => {
+    const va = (a[sortCol] || '').toString().toLowerCase();
+    const vb = (b[sortCol] || '').toString().toLowerCase();
+    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+}
+
+function exportarCSV() {
+  const cols = ['SOS DBS','Nombre SOS DBS','SOS NAXT','Nombre SOS NAXT','Nombre LP3','LP3','GO LIVE MDI'];
+  const rows = filtered.map(r =>
+    [r.sosDBS, r.nomDBS, r.sosNAXT, r.nomNAXT, r.nomLP3, r.lp3, r.goLive]
+      .map(v => `"${(v||'').replace(/"/g,'""')}"`)
+      .join(',')
+  );
+  const csv = [cols.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'Equivalencias_SOS.csv';
+  a.click();
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeIcon').innerHTML = isLight
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  localStorage.setItem('mts_theme', isLight ? 'light' : 'dark');
+}
+if (localStorage.getItem('mts_theme') === 'light') toggleTheme();
+
+// Stats iniciales
+document.getElementById('statTotal').textContent = DATA.length;
+document.getElementById('statDBS').textContent  = new Set(DATA.map(d=>d.sosDBS).filter(Boolean)).size;
+document.getElementById('statNAXT').textContent = new Set(DATA.map(d=>d.sosNAXT).filter(Boolean)).size;
+
+// Render inicial
+filtrar();
+
+// Enter en inputs
+document.querySelectorAll('input').forEach(i => i.addEventListener('keydown', e => { if(e.key==='Enter') filtrar(); }));
+</script>
+</body>
+</html>

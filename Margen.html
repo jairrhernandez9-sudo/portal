@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MADISA — Calculadora de Márgenes</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --yellow:#FFC200; --yellow-lt:#FFD04D;
+  --black:#111111; --black-2:#181818; --black-3:#222222; --black-4:#2C2C2C;
+  --white:#FFFFFF; --gray:#888888; --gray-lt:#BBBBBB; --border:#2A2A2A;
+  --green:#2ECC71; --red:#E74C3C; --blue:#3498DB; --orange:#E67E22;
+}
+html,body { min-height:100vh; font-family:'Barlow',sans-serif; background:var(--black); color:var(--white); overflow-x:hidden; }
+@keyframes slideDown { from{opacity:0;transform:translateY(-100%)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp    { from{opacity:0;transform:translateY(12px)}  to{opacity:1;transform:translateY(0)} }
+@keyframes pulseGlow { 0%,100%{opacity:.6} 50%{opacity:1} }
+@keyframes scanH     { from{transform:translateY(-100%)} to{transform:translateY(100vh)} }
+@keyframes rotateSlow  { to{transform:rotate(360deg)} }
+@keyframes rotateSlowR { to{transform:rotate(-360deg)} }
+@keyframes spin { to{transform:rotate(360deg)} }
+@keyframes popIn { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
+
+/* BG */
+.bg-deco{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-deco canvas{position:absolute;inset:0;width:100%;height:100%}
+.bg-svg{position:absolute;inset:0;width:100%;height:100%}
+.ring-1{transform-origin:1380px 80px;animation:rotateSlow 32s linear infinite}
+.ring-2{transform-origin:1380px 80px;animation:rotateSlowR 20s linear infinite}
+.scan{animation:scanH 7s 1s linear infinite;opacity:.2}
+.tri-p{animation:pulseGlow 4s ease-in-out infinite}
+.tri-p2{animation:pulseGlow 6s 1.5s ease-in-out infinite}
+
+/* TOPBAR */
+.topbar{height:56px;background:rgba(17,17,17,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,194,0,.1);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:100;animation:slideDown .5s cubic-bezier(.22,1,.36,1) both}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-left img{height:32px}
+.topbar-divider{width:1px;height:26px;background:#333}
+.topbar-title{font-family:"Barlow Condensed",sans-serif;font-size:.9rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-lt)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn-theme{width:34px;height:34px;border-radius:7px;border:1px solid var(--border);background:rgba(34,34,34,.8);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,background .15s}
+.btn-theme:hover{border-color:var(--yellow);background:rgba(255,194,0,.08)}
+.btn-theme svg{width:15px;height:15px;stroke:var(--gray);fill:none;stroke-width:2}
+.btn-theme:hover svg{stroke:var(--yellow)}
+.btn-back{display:flex;align-items:center;gap:6px;background:none;border:1px solid #333;border-radius:5px;padding:6px 12px;color:var(--gray);font-size:.78rem;font-family:"Barlow",sans-serif;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:border-color .15s,color .15s;text-decoration:none}
+.btn-back:hover{border-color:var(--yellow);color:var(--yellow)}
+.btn-back svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5}
+
+.page-header{padding:1.5rem 1.5rem 0;position:relative;z-index:1;animation:fadeUp .5s .2s cubic-bezier(.22,1,.36,1) both;opacity:0}
+.page-header h1{font-family:"Barlow Condensed",sans-serif;font-size:1.9rem;font-weight:800;text-transform:uppercase}
+.page-header h1 span{color:var(--yellow)}
+.page-header p{font-size:.85rem;color:var(--gray);margin-top:3px}
+
+.main{max-width:1100px;margin:0 auto;padding:1.25rem 1.5rem 3rem;position:relative;z-index:1}
+
+/* TC BANNER */
+.tc-banner{display:flex;align-items:center;gap:12px;background:var(--black-2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:1.25rem;font-size:.8rem;animation:fadeUp .5s .3s cubic-bezier(.22,1,.36,1) both;opacity:0}
+.tc-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulseGlow 1.5s ease-in-out infinite}
+.tc-dot.loading{background:var(--yellow)}
+.tc-dot.error{background:var(--red);animation:none}
+.tc-label{color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:.7rem}
+.tc-val{font-family:"Barlow Condensed",sans-serif;font-size:1.1rem;font-weight:800;color:var(--yellow);margin:0 4px}
+.tc-date{color:var(--gray);font-size:.72rem;margin-left:auto}
+.tc-refresh{background:none;border:1px solid #333;border-radius:5px;padding:4px 10px;color:var(--gray);font-size:.72rem;cursor:pointer;font-family:"Barlow",sans-serif;font-weight:600;transition:border-color .15s,color .15s;display:flex;align-items:center;gap:4px}
+.tc-refresh:hover{border-color:var(--yellow);color:var(--yellow)}
+.tc-refresh svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.5}
+.tc-refresh.spinning svg{animation:spin .6s linear infinite}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:800px){.layout{grid-template-columns:1fr}}
+
+/* CARDS */
+.card{background:var(--black-2);border:1px solid var(--border);border-radius:14px;overflow:hidden;animation:fadeUp .5s .35s cubic-bezier(.22,1,.36,1) both;opacity:0}
+.card.delay2{animation-delay:.45s}
+.card-head{background:var(--yellow);padding:10px 18px;display:flex;align-items:center;gap:8px}
+.card-head svg{width:15px;height:15px;stroke:var(--black);fill:none;stroke-width:2.5}
+.card-head span{font-family:"Barlow Condensed",sans-serif;font-size:.85rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--black)}
+.card-body{padding:20px}
+
+/* FIELD GROUPS */
+.fg{margin-bottom:14px}
+.fg:last-child{margin-bottom:0}
+.fg label{display:block;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:6px}
+.input-wrap{position:relative;display:flex;gap:0}
+.prefix,.suffix{background:var(--black-3);border:1.5px solid #333;padding:0 12px;display:flex;align-items:center;font-family:"Barlow Condensed",sans-serif;font-size:.9rem;font-weight:700;color:var(--gray);white-space:nowrap;flex-shrink:0}
+.prefix{border-right:none;border-radius:7px 0 0 7px}
+.suffix{border-left:none;border-radius:0 7px 7px 0;color:var(--yellow)}
+.inp{width:100%;background:var(--black-3);border:1.5px solid #333;padding:10px 14px;font-family:"Barlow Condensed",sans-serif;font-size:1.05rem;font-weight:700;color:var(--white);outline:none;transition:border-color .15s;-moz-appearance:textfield}
+.inp::-webkit-inner-spin-button,.inp::-webkit-outer-spin-button{opacity:1}
+.inp:focus{border-color:var(--yellow)}
+.inp.standalone{border-radius:7px}
+.inp.has-prefix{border-radius:0 7px 7px 0}
+.inp.has-suffix{border-radius:7px 0 0 7px}
+
+/* Currency toggle */
+.cur-toggle{display:flex;border:1.5px solid #333;border-radius:7px;overflow:hidden;margin-bottom:14px}
+.cur-btn{flex:1;padding:9px;background:var(--black-3);border:none;color:var(--gray);font-family:"Barlow Condensed",sans-serif;font-size:.88rem;font-weight:700;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.cur-btn:not(:last-child){border-right:1px solid #333}
+.cur-btn.active-mxn{background:rgba(52,152,219,.15);color:var(--blue)}
+.cur-btn.active-usd{background:rgba(46,204,113,.15);color:var(--green)}
+
+/* Margen preset chips */
+.preset-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.preset{background:var(--black-3);border:1px solid #333;border-radius:20px;padding:4px 12px;font-size:.75rem;font-weight:700;color:var(--gray);cursor:pointer;transition:all .15s}
+.preset:hover{border-color:var(--yellow);color:var(--yellow)}
+.preset.active{background:rgba(255,194,0,.12);border-color:var(--yellow);color:var(--yellow)}
+
+/* RESULTADO */
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.r-pill{background:var(--black-3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden}
+.r-pill::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
+.r-pill.main::before{background:var(--yellow)}
+.r-pill.green::before{background:var(--green)}
+.r-pill.blue::before{background:var(--blue)}
+.r-pill.orange::before{background:var(--orange)}
+.r-pill.full{grid-column:span 2}
+.r-lbl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:5px}
+.r-val{font-family:"Barlow Condensed",sans-serif;font-size:1.6rem;font-weight:800;color:var(--white);line-height:1}
+.r-pill.main .r-val{color:var(--yellow);font-size:2rem}
+.r-pill.green .r-val{color:var(--green)}
+.r-pill.blue .r-val{color:var(--blue)}
+.r-pill.orange .r-val{color:var(--orange)}
+.r-sub{font-size:.72rem;color:var(--gray);margin-top:3px}
+
+/* IVA breakdown */
+.iva-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--black-3);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+.iva-lbl{font-size:.75rem;color:var(--gray);display:flex;align-items:center;gap:6px}
+.iva-lbl svg{width:13px;height:13px;stroke:var(--gray);fill:none;stroke-width:2}
+.iva-val{font-family:"Barlow Condensed",sans-serif;font-size:1rem;font-weight:800;color:var(--white)}
+
+/* Empty state */
+.empty-res{text-align:center;padding:2.5rem 1rem;color:var(--gray)}
+.empty-res svg{width:44px;height:44px;stroke:#333;fill:none;stroke-width:1.5;display:block;margin:0 auto 10px}
+.empty-res p{font-size:.85rem}
+
+/* Historial */
+.hist-list{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--yellow) var(--black-3)}
+.hist-list::-webkit-scrollbar{width:4px}
+.hist-list::-webkit-scrollbar-track{background:var(--black-3)}
+.hist-list::-webkit-scrollbar-thumb{background:var(--yellow);border-radius:4px}
+.hist-item{background:var(--black-3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s}
+.hist-item:hover{border-color:#444}
+.hist-body{flex:1;min-width:0}
+.hist-cost{font-size:.75rem;color:var(--gray)}
+.hist-price{font-family:"Barlow Condensed",sans-serif;font-size:1rem;font-weight:800;color:var(--yellow)}
+.hist-badge{font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(255,194,0,.12);color:var(--yellow);white-space:nowrap}
+.hist-del{background:none;border:none;color:#333;cursor:pointer;font-size:1rem;padding:2px 4px;transition:color .15s}
+.hist-del:hover{color:var(--red)}
+.hist-empty{text-align:center;padding:1.5rem;color:var(--gray);font-size:.82rem}
+
+/* Light theme */
+body.light{--black:#F5F5F0;--black-2:#FFFFFF;--black-3:#EFEFEB;--black-4:#E0E0DA;--white:#111111;--gray:#666666;--gray-lt:#333333;--border:#DDDDDA}
+body.light .topbar{background:rgba(255,255,255,.95);border-bottom-color:#DDD}
+body.light .topbar-divider{background:#DDD}
+body.light .btn-theme{background:#EFEFEB;border-color:#DDD}
+body.light .inp{color:#111}
+body.light .card-head{/* keep yellow */}
+
+footer{text-align:center;padding:1.5rem;font-size:.75rem;color:#333;border-top:1px solid #1A1A1A;position:relative;z-index:1}
+@media(max-width:600px){.main{padding:1rem}.topbar{padding:0 1rem}.result-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="bg-deco">
+  <canvas id="bgCanvas"></canvas>
+  <svg class="bg-svg" viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,194,0,0.07)" stroke-width="0.8"/>
+      </pattern>
+      <radialGradient id="g1" cx="78%" cy="12%" r="52%">
+        <stop offset="0%" stop-color="rgba(255,194,0,0.18)"/>
+        <stop offset="100%" stop-color="rgba(255,194,0,0)"/>
+      </radialGradient>
+    </defs>
+    <rect width="1440" height="900" fill="url(#grid)"/>
+    <rect width="1440" height="900" fill="url(#g1)"/>
+    <polygon class="tri-p"  points="1260,0 1440,0 1440,200" fill="rgba(255,194,0,0.10)"/>
+    <polygon class="tri-p2" points="1390,0 1440,0 1440,85"  fill="rgba(255,194,0,0.09)"/>
+    <circle class="ring-1" cx="1380" cy="80" r="310" fill="none" stroke="rgba(255,194,0,0.14)" stroke-width="1.5" stroke-dasharray="12 8"/>
+    <circle class="ring-2" cx="1380" cy="80" r="210" fill="none" stroke="rgba(255,194,0,0.10)" stroke-width="1"/>
+    <rect class="scan" x="0" y="0" width="1440" height="2" fill="rgba(255,194,0,0.3)"/>
+    <line x1="860" y1="0" x2="1440" y2="0" stroke="rgba(255,194,0,0.35)" stroke-width="1"/>
+    <line x1="1440" y1="0" x2="1440" y2="300" stroke="rgba(255,194,0,0.35)" stroke-width="1"/>
+  </svg>
+</div>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <img src="../Imagenes/MADISA-logo-vector1.png" alt="MADISA">
+    <div class="topbar-divider"></div>
+    <span class="topbar-title">Calculadora de Márgenes</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-theme" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="btn-back" href="compras.html">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Portal
+    </a>
+  </div>
+</header>
+
+<div class="page-header">
+  <h1>Calculadora de <span>Márgenes</span></h1>
+  <p>Calcula precio de venta aplicando markup sobre el costo</p>
+</div>
+
+<main class="main">
+
+  <!-- TC BANNER -->
+  <div class="tc-banner" id="tcBanner">
+    <div class="tc-dot loading" id="tcDot"></div>
+    <span class="tc-label">USD / MXN</span>
+    <span class="tc-val" id="tcVal">—</span>
+    <span id="tcSrc" style="font-size:.72rem;color:var(--gray)">Cargando Banxico...</span>
+    <span class="tc-date" id="tcDate"></span>
+    <button class="tc-refresh" id="tcBtn" onclick="fetchTC()">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Actualizar
+    </button>
+  </div>
+
+  <div class="layout">
+
+    <!-- CALCULADORA -->
+    <div class="card">
+      <div class="card-head">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>
+        <span>Datos de entrada</span>
+      </div>
+      <div class="card-body">
+
+        <!-- Moneda de costo -->
+        <div class="fg">
+          <label>Moneda del costo</label>
+          <div class="cur-toggle">
+            <button class="cur-btn active-mxn" id="btnMXN" onclick="setCur('MXN')">🇲🇽 MXN</button>
+            <button class="cur-btn" id="btnUSD" onclick="setCur('USD')">🇺🇸 USD</button>
+          </div>
+        </div>
+
+        <!-- Costo -->
+        <div class="fg">
+          <label>Costo de compra</label>
+          <div class="input-wrap">
+            <div class="prefix" id="costoPrefix">$</div>
+            <input class="inp has-prefix" type="number" id="inpCosto" placeholder="0.00" min="0" step="0.01" oninput="calcular()">
+            <div class="suffix" id="costoSuffix">MXN</div>
+          </div>
+        </div>
+
+        <!-- Markup % -->
+        <div class="fg">
+          <label>Markup (%)</label>
+          <div class="input-wrap">
+            <input class="inp has-suffix" type="number" id="inpMarkup" placeholder="0" min="0" step="0.5" oninput="calcular()">
+            <div class="suffix">%</div>
+          </div>
+          <div class="preset-row" id="presets">
+            <div class="preset" onclick="setMarkup(10)">10%</div>
+            <div class="preset" onclick="setMarkup(15)">15%</div>
+            <div class="preset" onclick="setMarkup(20)">20%</div>
+            <div class="preset" onclick="setMarkup(25)">25%</div>
+            <div class="preset" onclick="setMarkup(30)">30%</div>
+            <div class="preset" onclick="setMarkup(40)">40%</div>
+            <div class="preset" onclick="setMarkup(50)">50%</div>
+          </div>
+        </div>
+
+        <!-- IVA toggle -->
+        <div class="fg">
+          <label>Incluir IVA (16%) en resultado</label>
+          <div class="cur-toggle">
+            <button class="cur-btn active-usd" id="btnIVASi" onclick="setIVA(true)">Sí, mostrar con IVA</button>
+            <button class="cur-btn" id="btnIVANo" onclick="setIVA(false)">Solo precio neto</button>
+          </div>
+        </div>
+
+        <!-- Botón guardar -->
+        <button onclick="guardarHistorial()" style="width:100%;background:var(--yellow);color:var(--black);border:none;border-radius:8px;padding:11px;font-family:'Barlow Condensed',sans-serif;font-size:.95rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;transition:background .15s;margin-top:4px" onmouseover="this.style.background='#FFD04D'" onmouseout="this.style.background='var(--yellow)'">
+          + Guardar en historial
+        </button>
+
+      </div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="card delay2">
+      <div class="card-head">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Resultado</span>
+      </div>
+      <div class="card-body">
+
+        <div id="resEmpty" class="empty-res">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>
+          <p>Ingresa el costo y el markup para ver el resultado</p>
+        </div>
+
+        <div id="resContent" style="display:none">
+          <div class="result-grid">
+            <div class="r-pill main full">
+              <div class="r-lbl">Precio de Venta (sin IVA)</div>
+              <div class="r-val" id="rPrecioVenta">—</div>
+              <div class="r-sub" id="rPrecioVentaSub"></div>
+            </div>
+            <div class="r-pill green">
+              <div class="r-lbl">Ganancia Bruta</div>
+              <div class="r-val" id="rGanancia">—</div>
+              <div class="r-sub" id="rGananciaSub"></div>
+            </div>
+            <div class="r-pill orange">
+              <div class="r-lbl">Markup aplicado</div>
+              <div class="r-val" id="rMarkup">—</div>
+              <div class="r-sub">sobre el costo</div>
+            </div>
+            <div class="r-pill blue">
+              <div class="r-lbl">Margen sobre venta</div>
+              <div class="r-val" id="rMargenVenta">—</div>
+              <div class="r-sub">del precio de venta</div>
+            </div>
+            <div class="r-pill blue" id="rTCPill" style="display:none">
+              <div class="r-lbl">Tipo de cambio usado</div>
+              <div class="r-val" id="rTC">—</div>
+              <div class="r-sub">USD → MXN (Banxico)</div>
+            </div>
+          </div>
+
+          <!-- IVA breakdown -->
+          <div id="ivaSection">
+            <div class="iva-row">
+              <span class="iva-lbl">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Precio neto (sin IVA)
+              </span>
+              <span class="iva-val" id="ivaNeto">—</span>
+            </div>
+            <div class="iva-row" style="border-color:rgba(46,204,113,.25)">
+              <span class="iva-lbl" style="color:var(--green)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--green)"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                IVA (16%)
+              </span>
+              <span class="iva-val" style="color:var(--green)" id="ivaVal">—</span>
+            </div>
+            <div class="iva-row" style="border-color:rgba(255,194,0,.3);background:rgba(255,194,0,.05)">
+              <span class="iva-lbl" style="color:var(--yellow);font-weight:700">
+                <svg viewBox="0 0 24 24" style="stroke:var(--yellow)"><polyline points="20 6 9 17 4 12"/></svg>
+                Precio final con IVA
+              </span>
+              <span class="iva-val" style="color:var(--yellow);font-size:1.2rem" id="ivaTotal">—</span>
+            </div>
+          </div>
+
+          <!-- USD equivalent -->
+          <div id="usdSection" style="display:none;margin-top:10px">
+            <div class="iva-row" style="border-color:rgba(46,204,113,.2)">
+              <span class="iva-lbl" style="color:var(--green)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--green)"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>
+                Equivalente en USD (sin IVA)
+              </span>
+              <span class="iva-val" style="color:var(--green)" id="usdNeto">—</span>
+            </div>
+            <div class="iva-row" style="border-color:rgba(46,204,113,.2)">
+              <span class="iva-lbl" style="color:var(--green)">Equivalente en USD (con IVA)</span>
+              <span class="iva-val" style="color:var(--green)" id="usdTotal">—</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="card" style="margin-top:16px;animation-delay:.5s">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Historial de cálculos</span>
+      <button onclick="limpiarHistorial()" style="margin-left:auto;background:none;border:1px solid rgba(0,0,0,.2);border-radius:5px;padding:3px 10px;color:rgba(0,0,0,.5);font-size:.7rem;font-family:'Barlow',sans-serif;font-weight:700;cursor:pointer;text-transform:uppercase">Limpiar</button>
+    </div>
+    <div class="card-body">
+      <div class="hist-list" id="histList">
+        <div class="hist-empty">Los cálculos guardados aparecerán aquí</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+<footer>© 2026 — MADISA Portal de Compras</footer>
+
+<script>
+// ── PARTICLES ──
+(function(){
+  const canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d');
+  let W,H,particles=[];
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+  window.addEventListener('resize',resize);resize();
+  function rand(a,b){return Math.random()*(b-a)+a;}
+  class Particle{
+    constructor(){this.reset();}
+    reset(){this.x=rand(0,W);this.y=rand(0,H);this.r=rand(1,2.5);this.vx=rand(-.18,.18);this.vy=rand(-.35,-.1);this.a=rand(.2,.65);this.da=rand(.004,.008)*(Math.random()>.5?1:-1);}
+    update(){this.x+=this.vx;this.y+=this.vy;this.a+=this.da;if(this.a<=0||this.a>=.7)this.da*=-1;if(this.y<-10||this.x<-10||this.x>W+10)this.reset();}
+    draw(){const c=window._pc||'255,194,0';ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=`rgba(${c},${this.a})`;ctx.fill();}
+  }
+  for(let i=0;i<100;i++)particles.push(new Particle());
+  function lines(){const c=window._pc||'255,194,0';for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<150){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(${c},${.16*(1-d/150)})`;ctx.lineWidth=.7;ctx.stroke();}}}
+  function animate(){ctx.clearRect(0,0,W,H);lines();particles.forEach(p=>{p.update();p.draw();});requestAnimationFrame(animate);}
+  animate();
+})();
+
+// ── ESTADO ──
+let tcRate   = null;
+let currency = 'MXN';
+let ivaOn    = true;
+let historial = JSON.parse(localStorage.getItem('madisa_margenes') || '[]');
+
+// ── TIPO DE CAMBIO BANXICO ──
+async function fetchTC(){
+  const btn = document.getElementById('tcBtn');
+  const dot = document.getElementById('tcDot');
+  btn.classList.add('spinning');
+  dot.className = 'tc-dot loading';
+  document.getElementById('tcSrc').textContent = 'Consultando Banxico...';
+
+  try {
+    const url = 'https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/oportuno?token=7b4b9da5e11dbf73dd8ad34c2dd1b631d4b0f2a0aff27c8e10b4e88b9a02be9d';
+    const res = await fetch(url);
+    const json = await res.json();
+    const obs = json.bmx.series[0].datos[0];
+    tcRate = parseFloat(obs.dato.replace(',', '.')) / 10000;
+    // fallback if value looks weird
+    if (tcRate < 10 || tcRate > 30) tcRate = parseFloat(obs.dato.replace(',',''));
+    if (isNaN(tcRate) || tcRate < 5) throw new Error('valor inválido');
+
+    document.getElementById('tcVal').textContent = `$${tcRate.toFixed(4)}`;
+    document.getElementById('tcSrc').textContent = 'Banxico en tiempo real';
+    document.getElementById('tcDate').textContent = obs.fecha;
+    dot.className = 'tc-dot';
+  } catch(e) {
+    // fallback manual
+    tcRate = 17.15;
+    document.getElementById('tcVal').textContent = `$${tcRate.toFixed(4)}`;
+    document.getElementById('tcSrc').textContent = 'Valor de referencia manual';
+    document.getElementById('tcDate').textContent = '';
+    dot.className = 'tc-dot error';
+  }
+  btn.classList.remove('spinning');
+  calcular();
+}
+fetchTC();
+
+// ── MONEDA ──
+function setCur(cur){
+  currency = cur;
+  document.getElementById('btnMXN').className = 'cur-btn' + (cur==='MXN'?' active-mxn':'');
+  document.getElementById('btnUSD').className = 'cur-btn' + (cur==='USD'?' active-usd':'');
+  document.getElementById('costoSuffix').textContent = cur;
+  calcular();
+}
+
+// ── IVA ──
+function setIVA(on){
+  ivaOn = on;
+  document.getElementById('btnIVASi').className = 'cur-btn' + (on?' active-usd':'');
+  document.getElementById('btnIVANo').className = 'cur-btn' + (!on?' active-mxn':'');
+  document.getElementById('ivaSection').style.display = on ? '' : 'none';
+  calcular();
+}
+
+// ── PRESETS ──
+function setMarkup(val){
+  document.getElementById('inpMarkup').value = val;
+  document.querySelectorAll('.preset').forEach(p => {
+    p.classList.toggle('active', parseInt(p.textContent) === val);
+  });
+  calcular();
+}
+
+// ── FORMATO ──
+function fmt(n, cur='MXN'){
+  const sym = cur === 'USD' ? 'USD ' : 'MXN ';
+  return sym + n.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtUSD(n){ return 'USD ' + n.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+// ── CALCULAR ──
+function calcular(){
+  const costoRaw  = parseFloat(document.getElementById('inpCosto').value)  || 0;
+  const markup    = parseFloat(document.getElementById('inpMarkup').value) || 0;
+
+  // Update preset highlight
+  document.querySelectorAll('.preset').forEach(p => {
+    p.classList.toggle('active', parseFloat(p.textContent) === markup);
+  });
+
+  if(costoRaw <= 0 || markup <= 0){
+    document.getElementById('resEmpty').style.display   = '';
+    document.getElementById('resContent').style.display = 'none';
+    return;
+  }
+  document.getElementById('resEmpty').style.display   = 'none';
+  document.getElementById('resContent').style.display = '';
+
+  // Convertir costo a MXN si es USD
+  const tc = tcRate || 17.15;
+  const costoMXN = currency === 'USD' ? costoRaw * tc : costoRaw;
+  const costoUSD = currency === 'USD' ? costoRaw     : costoRaw / tc;
+
+  // Cálculos
+  const precioVenta  = costoMXN * (1 + markup / 100);   // precio sin IVA
+  const ganancia     = precioVenta - costoMXN;
+  const margenVenta  = (ganancia / precioVenta) * 100;
+  const iva          = precioVenta * 0.16;
+  const precioConIVA = precioVenta + iva;
+
+  // USD equivalents
+  const precioVentaUSD  = precioVenta  / tc;
+  const precioConIVAUSD = precioConIVA / tc;
+  const gananciaUSD     = ganancia / tc;
+
+  // Mostrar
+  document.getElementById('rPrecioVenta').textContent    = fmt(precioVenta);
+  document.getElementById('rPrecioVentaSub').textContent = currency === 'USD'
+    ? `Costo USD ${costoRaw.toFixed(2)} × TC ${tc.toFixed(4)} = MXN ${costoMXN.toFixed(2)}`
+    : `Costo: ${fmt(costoMXN)} + ${markup}% markup`;
+
+  document.getElementById('rGanancia').textContent    = fmt(ganancia);
+  document.getElementById('rGananciaSub').textContent = `≈ ${fmtUSD(gananciaUSD)}`;
+  document.getElementById('rMarkup').textContent      = markup.toFixed(1) + '%';
+  document.getElementById('rMargenVenta').textContent = margenVenta.toFixed(1) + '%';
+
+  // TC pill
+  if(currency === 'USD'){
+    document.getElementById('rTCPill').style.display = '';
+    document.getElementById('rTC').textContent = '$' + tc.toFixed(4);
+    document.getElementById('rTCPill').classList.remove('full');
+  } else {
+    document.getElementById('rTCPill').style.display = 'none';
+  }
+
+  // IVA
+  document.getElementById('ivaNeto').textContent  = fmt(precioVenta);
+  document.getElementById('ivaVal').textContent   = fmt(iva);
+  document.getElementById('ivaTotal').textContent = fmt(precioConIVA);
+
+  // USD equivalents (solo si costo era en MXN)
+  if(currency === 'MXN'){
+    document.getElementById('usdSection').style.display = '';
+    document.getElementById('usdNeto').textContent  = fmtUSD(precioVentaUSD);
+    document.getElementById('usdTotal').textContent = fmtUSD(precioConIVAUSD);
+  } else {
+    document.getElementById('usdSection').style.display = 'none';
+  }
+}
+
+// ── HISTORIAL ──
+function guardarHistorial(){
+  const costo   = parseFloat(document.getElementById('inpCosto').value)  || 0;
+  const markup  = parseFloat(document.getElementById('inpMarkup').value) || 0;
+  if(costo <= 0 || markup <= 0) return;
+
+  const tc = tcRate || 17.15;
+  const costoMXN    = currency === 'USD' ? costo * tc : costo;
+  const precioVenta = costoMXN * (1 + markup / 100);
+  const precioConIVA= precioVenta * 1.16;
+
+  const item = {
+    id: Date.now(),
+    costo, currency, markup, tc,
+    costoMXN: costoMXN.toFixed(2),
+    precioVenta: precioVenta.toFixed(2),
+    precioConIVA: precioConIVA.toFixed(2),
+    ts: new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'})
+  };
+  historial.unshift(item);
+  if(historial.length > 20) historial.pop();
+  localStorage.setItem('madisa_margenes', JSON.stringify(historial));
+  renderHistorial();
+}
+
+function cargarHistItem(item){
+  setCur(item.currency);
+  document.getElementById('inpCosto').value  = item.costo;
+  document.getElementById('inpMarkup').value = item.markup;
+  calcular();
+}
+
+function eliminarHistItem(id, e){
+  e.stopPropagation();
+  historial = historial.filter(h => h.id !== id);
+  localStorage.setItem('madisa_margenes', JSON.stringify(historial));
+  renderHistorial();
+}
+
+function limpiarHistorial(){
+  historial = [];
+  localStorage.removeItem('madisa_margenes');
+  renderHistorial();
+}
+
+function renderHistorial(){
+  const el = document.getElementById('histList');
+  if(!historial.length){
+    el.innerHTML = '<div class="hist-empty">Los cálculos guardados aparecerán aquí</div>';
+    return;
+  }
+  el.innerHTML = historial.map(h => `
+    <div class="hist-item" onclick="cargarHistItem(${JSON.stringify(h).replace(/"/g,'&quot;')})">
+      <div class="hist-body">
+        <div class="hist-cost">Costo: ${h.currency} ${parseFloat(h.costo).toLocaleString('es-MX',{minimumFractionDigits:2})} · ${h.ts}</div>
+        <div class="hist-price">MXN ${parseFloat(h.precioVenta).toLocaleString('es-MX',{minimumFractionDigits:2})} <span style="font-size:.8rem;color:var(--gray)">sin IVA</span></div>
+        <div style="font-size:.72rem;color:var(--gray);margin-top:2px">Con IVA: MXN ${parseFloat(h.precioConIVA).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+      </div>
+      <div class="hist-badge">${h.markup}%</div>
+      <button class="hist-del" onclick="eliminarHistItem(${h.id},event)">✕</button>
+    </div>`).join('');
+}
+renderHistorial();
+
+// ── TEMA ──
+function toggleTheme(){
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeIcon').innerHTML = isLight
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  localStorage.setItem('mts_theme', isLight ? 'light' : 'dark');
+}
+if(localStorage.getItem('mts_theme')==='light') toggleTheme();
+</script>
+</body>
+</html>

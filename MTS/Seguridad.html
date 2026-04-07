@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTS — Seguridad</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --yellow:   #FFC200;
+  --yellow-d: #E0AA00;
+  --yellow-lt:#FFD04D;
+  --black:    #111111;
+  --black-2:  #181818;
+  --black-3:  #222222;
+  --black-4:  #2C2C2C;
+  --white:    #FFFFFF;
+  --gray:     #888888;
+  --gray-lt:  #BBBBBB;
+  --border:   #2A2A2A;
+  --green:    #2ECC71;
+  --red:      #E74C3C;
+}
+html, body { min-height: 100vh; font-family: 'Barlow', sans-serif; background: var(--black); color: var(--white); }
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 56px; background: var(--black-2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; position: sticky; top: 0; z-index: 100;
+  animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes slideDown { from { opacity:0; transform:translateY(-100%); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp    { from { opacity:0; transform:translateY(14px);  } to { opacity:1; transform:translateY(0); } }
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-left img { height: 32px; }
+.topbar-divider { width: 1px; height: 26px; background: #333; }
+.nav-links { display: flex; gap: 4px; }
+.nav-link {
+  padding: 6px 14px; border-radius: 5px;
+  font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--gray); text-decoration: none; transition: color 0.15s, background 0.15s;
+  cursor: pointer; border: none; background: none;
+}
+.nav-link:hover  { color: var(--yellow-lt); background: rgba(255,194,0,0.06); }
+.nav-link.active { color: var(--yellow);    background: rgba(255,194,0,0.1);  }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn-theme {
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--black-3); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.btn-theme:hover { border-color: var(--yellow); background: rgba(255,194,0,0.08); }
+.btn-theme svg { width: 16px; height: 16px; stroke: var(--gray); fill: none; stroke-width: 2; transition: stroke 0.15s; }
+.btn-theme:hover svg { stroke: var(--yellow); }
+.btn-back {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid #333; border-radius: 5px;
+  padding: 6px 12px; color: var(--gray); font-size: 0.78rem;
+  font-family: 'Barlow', sans-serif; font-weight: 600;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+  transition: border-color 0.15s, color 0.15s; text-decoration: none;
+}
+.btn-back:hover { border-color: var(--yellow); color: var(--yellow); }
+
+/* ── PAGE HEADER ── */
+.page-header { padding: 2rem 2rem 0; animation: fadeUp 0.5s 0.2s cubic-bezier(0.22,1,0.36,1) both; }
+.page-header h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.9rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.02em; color: var(--white);
+}
+.page-header h1 span { color: var(--yellow); }
+.page-header p { font-size: 0.85rem; color: var(--gray); margin-top: 3px; }
+
+/* ── LAYOUT ── */
+.main {
+  max-width: 1300px; margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--black-2); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+.card-header {
+  padding: 12px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.card-header svg { width: 15px; height: 15px; stroke: var(--yellow); fill: none; stroke-width: 2; flex-shrink: 0; }
+.card-header-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-lt);
+  flex: 1;
+}
+.card-body { padding: 18px; }
+
+/* ── FORM ── */
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--gray); margin-bottom: 6px;
+}
+.form-group input,
+.form-group select {
+  width: 100%; background: var(--black-3); border: 1.5px solid #333;
+  border-radius: 7px; padding: 10px 12px;
+  font-family: 'Barlow', sans-serif; font-size: 0.88rem; color: var(--white);
+  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-group input:focus,
+.form-group select:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(255,194,0,0.1); }
+.form-group input::placeholder { color: #444; }
+.form-group select option { background: var(--black-3); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Toggle activo */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--black-3); border: 1.5px solid #333;
+  border-radius: 7px; padding: 10px 14px; margin-bottom: 14px;
+}
+.toggle-label { font-size: 0.88rem; font-weight: 600; color: var(--gray-lt); }
+.toggle-switch { position: relative; width: 40px; height: 22px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0; border-radius: 22px;
+  background: var(--black-4); border: 1.5px solid #444;
+  cursor: pointer; transition: background 0.2s, border-color 0.2s;
+}
+.toggle-switch input:checked + .toggle-track { background: var(--yellow); border-color: var(--yellow); }
+.toggle-track::after {
+  content: ''; position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--gray); transition: transform 0.2s, background 0.2s;
+}
+.toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); background: var(--black); }
+
+/* Form buttons */
+.form-actions { display: flex; gap: 10px; margin-top: 6px; }
+.btn-save {
+  flex: 1; background: var(--yellow); color: var(--black); border: none;
+  border-radius: 7px; padding: 11px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.95rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; transition: background 0.15s, transform 0.1s;
+}
+.btn-save:hover  { background: var(--yellow-lt); }
+.btn-save:active { transform: scale(0.98); }
+.btn-cancel {
+  flex: 1; background: none; color: var(--gray);
+  border: 1.5px solid #333; border-radius: 7px; padding: 11px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.95rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; transition: border-color 0.15s, color 0.15s;
+}
+.btn-cancel:hover { border-color: #555; color: var(--gray-lt); }
+
+/* editing state */
+.card.editing { border-color: var(--yellow); }
+.card.editing .card-header { background: rgba(255,194,0,0.06); }
+
+/* ── TABLA ── */
+.card.table-card { animation-delay: 0.1s; }
+.table-toolbar {
+  padding: 12px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.search-wrap { position: relative; flex: 1; }
+.search-wrap svg {
+  position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; stroke: var(--gray); fill: none; stroke-width: 2; pointer-events: none;
+}
+.search-wrap input {
+  width: 100%; background: var(--black-3); border: 1.5px solid #333;
+  border-radius: 7px; padding: 8px 12px 8px 34px;
+  font-family: 'Barlow', sans-serif; font-size: 0.85rem; color: var(--white);
+  outline: none; transition: border-color 0.15s;
+}
+.search-wrap input:focus { border-color: var(--yellow); }
+.search-wrap input::placeholder { color: #444; }
+.btn-new {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--yellow); color: var(--black); border: none;
+  border-radius: 7px; padding: 8px 16px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.88rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; transition: background 0.15s; white-space: nowrap;
+}
+.btn-new:hover { background: var(--yellow-lt); }
+.btn-new svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+.table-wrap { overflow-x: auto; }
+.table-wrap::-webkit-scrollbar { height: 5px; }
+.table-wrap::-webkit-scrollbar-track { background: var(--black-3); }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--yellow); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+thead tr { background: var(--black-3); }
+thead th {
+  padding: 10px 14px; text-align: left;
+  font-size: 0.67rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--gray); white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+tbody tr { border-bottom: 1px solid #1E1E1E; transition: background 0.12s; }
+tbody tr:hover { background: rgba(255,194,0,0.03); }
+tbody td { padding: 11px 14px; color: var(--gray-lt); }
+tbody td.bold { color: var(--white); font-weight: 600; }
+
+.badge-active   { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+.badge-true  { background: rgba(46,204,113,0.12); color: var(--green); }
+.badge-false { background: rgba(136,136,136,0.12); color: var(--gray); }
+
+.badge-rol { display: inline-flex; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; background: rgba(255,194,0,0.1); color: var(--yellow); }
+
+.row-actions { display: flex; gap: 6px; }
+.act-btn {
+  display: flex; align-items: center; gap: 5px;
+  border-radius: 5px; padding: 5px 10px;
+  font-family: 'Barlow', sans-serif; font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  cursor: pointer; border: 1px solid; transition: background 0.15s, color 0.15s;
+}
+.act-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+.act-edit   { color: var(--yellow); border-color: rgba(255,194,0,0.3); background: rgba(255,194,0,0.06); }
+.act-edit:hover   { background: rgba(255,194,0,0.16); }
+.act-delete { color: var(--red); border-color: rgba(231,76,60,0.3); background: rgba(231,76,60,0.06); }
+.act-delete:hover { background: rgba(231,76,60,0.16); }
+
+.table-empty { text-align: center; padding: 3rem; color: var(--gray); font-size: 0.85rem; }
+
+/* confirm modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.visible { display: flex; }
+.modal-box {
+  background: var(--black-2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 28px; max-width: 380px; width: 90%;
+  animation: fadeUp 0.25s cubic-bezier(0.22,1,0.36,1);
+}
+.modal-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(231,76,60,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.modal-icon svg { width: 22px; height: 22px; stroke: var(--red); fill: none; stroke-width: 2; }
+.modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; color: var(--white); margin-bottom: 6px; }
+.modal-msg   { font-size: 0.85rem; color: var(--gray); line-height: 1.55; margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 10px; }
+.modal-cancel { flex: 1; background: none; border: 1.5px solid #333; border-radius: 7px; padding: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 800; text-transform: uppercase; color: var(--gray); cursor: pointer; transition: border-color 0.15s; }
+.modal-cancel:hover { border-color: #555; }
+.modal-confirm { flex: 1; background: var(--red); border: none; border-radius: 7px; padding: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 800; text-transform: uppercase; color: var(--white); cursor: pointer; transition: background 0.15s; }
+.modal-confirm:hover { background: #c0392b; }
+
+/* ── LIGHT THEME ── */
+body.light {
+  --black: #F5F5F0; --black-2: #FFFFFF; --black-3: #EFEFEB;
+  --black-4: #E0E0DA; --white: #111111; --gray: #666666;
+  --gray-lt: #333333; --border: #DDDDDA;
+}
+body.light .topbar { background: #FFFFFF; }
+body.light .topbar-divider { background: #DDD; }
+body.light .form-group input,
+body.light .form-group select,
+body.light .search-wrap input { color: #111; }
+body.light .toggle-track { background: #CCC; border-color: #BBB; }
+
+/* footer */
+footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: #333; border-top: 1px solid #1A1A1A; }
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <img src="../Imagenes/MADISA-logo-vector1.png" alt="MADISA CAT">
+    <div class="topbar-divider"></div>
+    <nav class="nav-links">
+      <a class="nav-link" href="Inicio.html">MTS</a>
+      <a class="nav-link" href="CargaMasiva.html">Cargas Masivas</a>
+      <a class="nav-link active" href="#">Seguridad</a>
+    </nav>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-theme" id="themeBtn" title="Cambiar tema" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="btn-back" href="../dashboard.html">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Portal
+    </a>
+  </div>
+</header>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>Administración de <span>Usuarios</span></h1>
+  <p>Gestión de accesos y roles del sistema MTS</p>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- FORM CARD -->
+  <div class="card" id="formCard" style="animation-delay:0.3s">
+    <div class="card-header">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="card-header-title" id="formTitle">Agregar Usuario</span>
+    </div>
+    <div class="card-body">
+      <input type="hidden" id="editId">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" id="fUsuario" placeholder="Ej. jgonzalez">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="fPassword" placeholder="••••••••">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre completo</label>
+        <input type="text" id="fNombre" placeholder="Ej. Juan González Pérez">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="fEmail" placeholder="usuario@madisa.com">
+        </div>
+        <div class="form-group">
+          <label>Empleado ID</label>
+          <input type="text" id="fEmpleado" placeholder="Ej. EMP001">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Rol</label>
+        <select id="fRol">
+          <option value="ADMINISTRADOR">Administrador</option>
+          <option value="COMPRAS">Compras</option>
+          <option value="TRAFICO">Tráfico</option>
+          <option value="IMPORTACION">Importación</option>
+          <option value="VISOR">Visor (solo lectura)</option>
+        </select>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Usuario activo</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="fActivo" checked>
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-save" onclick="guardar()">
+          <span id="btnSaveText">Guardar usuario</span>
+        </button>
+        <button class="btn-cancel" onclick="cancelar()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="card table-card" style="animation-delay:0.4s">
+    <div class="card-header">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="card-header-title">Lista de Usuarios</span>
+      <span style="font-size:0.75rem;color:var(--gray);margin-left:auto" id="userCount"></span>
+    </div>
+    <div class="table-toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Buscar usuario, nombre o email..." oninput="filtrar()">
+      </div>
+      <button class="btn-new" onclick="nuevoUsuario()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo
+      </button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Empleado ID</th>
+            <th>Rol</th>
+            <th>Activo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody"></tbody>
+      </table>
+      <div class="table-empty" id="tableEmpty" style="display:none">No se encontraron usuarios.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>© 2026 — MADISA MTS Seguridad</footer>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </div>
+    <div class="modal-title">Eliminar usuario</div>
+    <div class="modal-msg" id="modalMsg">¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.</div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-confirm" onclick="confirmarEliminar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATOS DEMO ──
+let usuarios = [
+  { id:1, usuario:'jsegovia',  password:'****', nombre:'Juan Jesus Segovia R.',  email:'jsegovia@madisa.com',  empleado:'EMP001', rol:'ADMINISTRADOR', activo:true  },
+  { id:2, usuario:'josoria',   password:'****', nombre:'Juan Osoria',            email:'josoria@madisa.com',   empleado:'EMP002', rol:'ADMINISTRADOR', activo:true  },
+  { id:3, usuario:'tespino',   password:'****', nombre:'Tanya Espino',           email:'tespino@madisa.com',   empleado:'EMP003', rol:'COMPRAS',        activo:true  },
+  { id:4, usuario:'rcastro',   password:'****', nombre:'Rogelio Castro Zarate',  email:'rcastro@madisa.com',   empleado:'EMP004', rol:'TRAFICO',        activo:false },
+];
+let nextId = 5;
+let deleteId = null;
+let editMode = false;
+
+function renderTable(data) {
+  const tbody = document.getElementById('userTableBody');
+  const empty = document.getElementById('tableEmpty');
+  document.getElementById('userCount').textContent = `${data.length} usuario${data.length!==1?'s':''}`;
+
+  if (!data.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = data.map(u => `
+    <tr>
+      <td style="color:var(--gray)">${u.id}</td>
+      <td class="bold">${u.usuario}</td>
+      <td>${u.nombre}</td>
+      <td style="color:var(--gray-lt)">${u.email}</td>
+      <td style="color:var(--gray)">${u.empleado}</td>
+      <td><span class="badge-rol">${u.rol}</span></td>
+      <td><span class="badge-active ${u.activo ? 'badge-true' : 'badge-false'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="act-btn act-edit" onclick="editar(${u.id})">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar
+          </button>
+          <button class="act-btn act-delete" onclick="confirmar(${u.id}, '${u.usuario}')">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Eliminar
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filtrar() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  renderTable(usuarios.filter(u =>
+    u.usuario.toLowerCase().includes(q) ||
+    u.nombre.toLowerCase().includes(q)  ||
+    u.email.toLowerCase().includes(q)
+  ));
+}
+
+function limpiarForm() {
+  ['fUsuario','fPassword','fNombre','fEmail','fEmpleado'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fRol').value = 'ADMINISTRADOR';
+  document.getElementById('fActivo').checked = true;
+  document.getElementById('editId').value = '';
+}
+
+function nuevoUsuario() {
+  editMode = false;
+  limpiarForm();
+  document.getElementById('formTitle').textContent = 'Agregar Usuario';
+  document.getElementById('btnSaveText').textContent = 'Guardar usuario';
+  document.getElementById('formCard').classList.remove('editing');
+  document.getElementById('fPassword').placeholder = '••••••••';
+}
+
+function editar(id) {
+  const u = usuarios.find(x => x.id === id);
+  if (!u) return;
+  editMode = true;
+  document.getElementById('editId').value = id;
+  document.getElementById('fUsuario').value  = u.usuario;
+  document.getElementById('fPassword').value = '';
+  document.getElementById('fPassword').placeholder = 'Dejar vacío para no cambiar';
+  document.getElementById('fNombre').value   = u.nombre;
+  document.getElementById('fEmail').value    = u.email;
+  document.getElementById('fEmpleado').value = u.empleado;
+  document.getElementById('fRol').value      = u.rol;
+  document.getElementById('fActivo').checked = u.activo;
+  document.getElementById('formTitle').textContent    = 'Editar Usuario';
+  document.getElementById('btnSaveText').textContent  = 'Actualizar usuario';
+  document.getElementById('formCard').classList.add('editing');
+  document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function guardar() {
+  const usuario  = document.getElementById('fUsuario').value.trim();
+  const nombre   = document.getElementById('fNombre').value.trim();
+  const email    = document.getElementById('fEmail').value.trim();
+  const empleado = document.getElementById('fEmpleado').value.trim();
+  const rol      = document.getElementById('fRol').value;
+  const activo   = document.getElementById('fActivo').checked;
+  const pass     = document.getElementById('fPassword').value;
+  const id       = parseInt(document.getElementById('editId').value);
+
+  if (!usuario || !nombre || !email) {
+    alert('Completa los campos obligatorios: Usuario, Nombre y Email.');
+    return;
+  }
+
+  if (editMode && id) {
+    const u = usuarios.find(x => x.id === id);
+    Object.assign(u, { usuario, nombre, email, empleado, rol, activo });
+    if (pass) u.password = pass;
+  } else {
+    usuarios.push({ id: nextId++, usuario, password: pass || '****', nombre, email, empleado, rol, activo });
+  }
+
+  nuevoUsuario();
+  filtrar();
+}
+
+function cancelar() { nuevoUsuario(); }
+
+function confirmar(id, nombre) {
+  deleteId = id;
+  document.getElementById('modalMsg').textContent = `¿Deseas eliminar al usuario "${nombre}"? Esta acción no se puede deshacer.`;
+  document.getElementById('confirmModal').classList.add('visible');
+}
+
+function closeModal() {
+  deleteId = null;
+  document.getElementById('confirmModal').classList.remove('visible');
+}
+
+function confirmarEliminar() {
+  usuarios = usuarios.filter(u => u.id !== deleteId);
+  closeModal();
+  filtrar();
+}
+
+// ── TEMA ──
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  const icon = document.getElementById('themeIcon');
+  icon.innerHTML = isLight
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  localStorage.setItem('mts_theme', isLight ? 'light' : 'dark');
+}
+if (localStorage.getItem('mts_theme') === 'light') toggleTheme();
+
+// Init
+renderTable(usuarios);
+</script>
+</body>
+</html>

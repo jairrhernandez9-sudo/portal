@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MADISA — Portal de Compras</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --yellow:   #FFC200;
+    --yellow-d: #E0AA00;
+    --yellow-lt:#FFD04D;
+    --black:    #111111;
+    --black-2:  #181818;
+    --black-3:  #222222;
+    --black-4:  #2A2A2A;
+    --white:    #FFFFFF;
+    --gray:     #888888;
+    --gray-lt:  #BBBBBB;
+  }
+
+  html, body {
+    min-height: 100vh;
+    font-family: 'Barlow', sans-serif;
+    background: var(--black);
+    color: var(--white);
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    height: 60px;
+    background: var(--black-2);
+    border-bottom: 1px solid #2A2A2A;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-left img { height: 34px; display: block; }
+  .topbar-divider { width: 1px; height: 28px; background: #333; }
+  .topbar-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--gray-lt);
+  }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .user-chip {
+    display: flex; align-items: center; gap: 9px;
+    background: var(--black-3); border-radius: 6px;
+    padding: 6px 12px; cursor: pointer;
+    border: 1px solid #2E2E2E;
+    transition: border-color 0.15s;
+  }
+  .user-chip:hover { border-color: #444; }
+  .user-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--yellow);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 800; color: var(--black);
+    flex-shrink: 0;
+  }
+  .user-name { font-size: 0.82rem; font-weight: 600; color: var(--gray-lt); }
+  .btn-logout {
+    background: none; border: 1px solid #333; border-radius: 6px;
+    padding: 6px 12px; color: var(--gray); font-size: 0.78rem;
+    font-family: 'Barlow', sans-serif; font-weight: 600;
+    cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+    display: flex; align-items: center; gap: 6px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-logout:hover { border-color: var(--yellow); color: var(--yellow); }
+
+  /* ── MAIN ── */
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .welcome {
+    margin-bottom: 2.5rem;
+  }
+  .welcome-label {
+    font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--gray); margin-bottom: 6px;
+  }
+  .welcome-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.02em;
+    color: var(--white);
+  }
+  .welcome-title span { color: var(--yellow); }
+  .welcome-sub { font-size: 0.88rem; color: var(--gray); margin-top: 4px; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 1.25rem;
+  }
+  .section-label span {
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--gray);
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: #2A2A2A;
+  }
+
+  /* ── APP GRID ── */
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+  }
+
+  .app-tile {
+    background: var(--black-2);
+    border: 1px solid #2A2A2A;
+    border-radius: 14px;
+    padding: 28px 16px 22px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.18s, background 0.18s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .app-tile::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--yellow);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.22s ease;
+    border-radius: 14px 14px 0 0;
+  }
+  .app-tile:hover {
+    border-color: #444;
+    background: var(--black-3);
+    transform: translateY(-3px);
+  }
+  .app-tile:hover::before { transform: scaleX(1); }
+  .app-tile:active { transform: translateY(-1px) scale(0.98); }
+
+  .app-tile.featured {
+    background: var(--yellow);
+    border-color: var(--yellow);
+  }
+  .app-tile.featured:hover {
+    background: var(--yellow-lt);
+    border-color: var(--yellow-lt);
+  }
+  .app-tile.featured::before { background: rgba(0,0,0,0.2); }
+
+  .tile-icon {
+    width: 54px; height: 54px;
+    background: var(--black-3);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.18s;
+  }
+  .app-tile:hover .tile-icon { background: var(--black-4); }
+  .app-tile.featured .tile-icon { background: rgba(0,0,0,0.12); }
+
+  .tile-icon svg { width: 26px; height: 26px; }
+
+  .tile-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.88rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--white); text-align: center; line-height: 1.2;
+  }
+  .app-tile.featured .tile-name { color: var(--black); }
+
+  /* badge */
+  .tile-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--yellow); color: var(--black);
+    font-size: 0.6rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 2px 7px; border-radius: 20px;
+  }
+  .app-tile.featured .tile-badge { background: var(--black); color: var(--yellow); }
+
+  /* ── QUICK STATS (mini) ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 2.5rem;
+  }
+  .stat-card {
+    background: var(--black-2);
+    border: 1px solid #2A2A2A;
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .stat-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray); margin-bottom: 6px; }
+  .stat-value { font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--white); }
+  .stat-value span { font-size: 0.8rem; font-weight: 500; color: var(--gray); margin-left: 4px; }
+  .stat-delta { font-size: 0.75rem; margin-top: 3px; }
+  .stat-delta.up { color: #2ECC71; }
+  .stat-delta.neutral { color: var(--gray); }
+
+  /* BG DECORATION */
+  .bg-deco {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .bg-deco svg { width: 100%; height: 100%; }
+  .topbar { position: relative; z-index: 10; }
+  .main   { position: relative; z-index: 1; }
+
+  /* ── ANIMACIONES ── */
+
+  /* Topbar desliza desde arriba */
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-100%); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .topbar { animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+
+  /* Welcome fade+up */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .welcome       { animation: fadeUp 0.55s 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+  .section-label { animation: fadeUp 0.5s 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+
+  /* Tiles entran escalonados */
+  .app-tile {
+    opacity: 0;
+    animation: tileIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  @keyframes tileIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Ícono flota al hover */
+  .app-tile:hover .tile-icon {
+    animation: floatIcon 0.6s ease infinite alternate;
+  }
+  @keyframes floatIcon {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-5px); }
+  }
+
+  /* Pulso en el ícono al hover */
+  .app-tile:hover .tile-icon::after {
+    content: '';
+    position: absolute; inset: -4px;
+    border-radius: 18px;
+    border: 1.5px solid rgba(255,194,0,0.35);
+    animation: pulse 1.2s ease infinite;
+  }
+  .tile-icon { position: relative; }
+  @keyframes pulse {
+    0%   { opacity: 1;   transform: scale(1); }
+    100% { opacity: 0;   transform: scale(1.35); }
+  }
+
+  /* Fondo: círculos girando lento */
+  @keyframes rotateSlow { from { transform-origin: 1380px 80px; transform: rotate(0deg); }
+                          to   { transform-origin: 1380px 80px; transform: rotate(360deg); } }
+  @keyframes rotateSlowR { from { transform-origin: 60px 860px; transform: rotate(0deg); }
+                           to   { transform-origin: 60px 860px; transform: rotate(-360deg); } }
+  .ring-tr { animation: rotateSlow  28s linear infinite; }
+  .ring-bl { animation: rotateSlowR 22s linear infinite; }
+
+  /* Fondo: dots parpadeando */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+  }
+  .dot-a1 { animation: blink 2.1s 0s ease-in-out infinite; }
+  .dot-a2 { animation: blink 2.1s 0.3s ease-in-out infinite; }
+  .dot-a3 { animation: blink 2.1s 0.6s ease-in-out infinite; }
+  .dot-a4 { animation: blink 2.1s 0.9s ease-in-out infinite; }
+  .dot-a5 { animation: blink 2.1s 1.2s ease-in-out infinite; }
+  .dot-a6 { animation: blink 2.1s 1.5s ease-in-out infinite; }
+  .dot-a7 { animation: blink 2.1s 0.15s ease-in-out infinite; }
+  .dot-a8 { animation: blink 2.1s 0.45s ease-in-out infinite; }
+
+  /* Fondo: scan line que baja */
+  @keyframes scanline {
+    from { transform: translateY(-900px); opacity: 0.4; }
+    to   { transform: translateY(1800px); opacity: 0; }
+  }
+  .scan-line { animation: scanline 7s 1s linear infinite; }
+
+  /* Sección portales label delay */
+  .section-label:nth-of-type(2) { animation-delay: 0.6s; }
+
+  /* responsive */
+  @media (max-width: 600px) {
+    .topbar { padding: 0 1rem; }
+    .topbar-title { display: none; }
+    .main { padding: 2rem 1rem; }
+    .app-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- BG DECORATION -->
+<div class="bg-deco">
+  <svg viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,194,0,0.10)" stroke-width="0.8"/>
+      </pattern>
+      <radialGradient id="glow1" cx="80%" cy="15%" r="50%">
+        <stop offset="0%" stop-color="rgba(255,194,0,0.18)"/>
+        <stop offset="100%" stop-color="rgba(255,194,0,0)"/>
+      </radialGradient>
+      <radialGradient id="glow2" cx="10%" cy="90%" r="45%">
+        <stop offset="0%" stop-color="rgba(255,194,0,0.13)"/>
+        <stop offset="100%" stop-color="rgba(255,194,0,0)"/>
+      </radialGradient>
+    </defs>
+
+    <!-- grid -->
+    <rect width="1440" height="900" fill="url(#grid)"/>
+
+    <!-- radial glows -->
+    <rect width="1440" height="900" fill="url(#glow1)"/>
+    <rect width="1440" height="900" fill="url(#glow2)"/>
+
+    <!-- top-right corner accent lines -->
+    <line x1="900" y1="0"   x2="1440" y2="0"   stroke="rgba(255,194,0,0.35)" stroke-width="1"/>
+    <line x1="1440" y1="0"  x2="1440" y2="320"  stroke="rgba(255,194,0,0.35)" stroke-width="1"/>
+    <line x1="1050" y1="0"  x2="1440" y2="350"  stroke="rgba(255,194,0,0.15)" stroke-width="1"/>
+    <line x1="1200" y1="0"  x2="1440" y2="180"  stroke="rgba(255,194,0,0.12)" stroke-width="1"/>
+
+    <!-- diagonal stripe cluster bottom-left -->
+    <line x1="-60" y1="600" x2="400" y2="1000"  stroke="rgba(255,194,0,0.10)" stroke-width="50"/>
+    <line x1="60"  y1="560" x2="520" y2="960"   stroke="rgba(255,194,0,0.07)" stroke-width="50"/>
+    <line x1="-60" y1="720" x2="280" y2="1060"  stroke="rgba(255,194,0,0.07)" stroke-width="50"/>
+
+    <!-- large circles top-right -->
+    <circle class="ring-tr" cx="1380" cy="80"  r="280" fill="none" stroke="rgba(255,194,0,0.14)" stroke-width="1"/>
+    <circle cx="1380" cy="80"  r="200" fill="none" stroke="rgba(255,194,0,0.12)" stroke-width="1"/>
+    <circle cx="1380" cy="80"  r="120" fill="none" stroke="rgba(255,194,0,0.10)" stroke-width="1"/>
+
+    <!-- circles bottom-left -->
+    <circle class="ring-bl" cx="60" cy="860" r="160" fill="none" stroke="rgba(255,194,0,0.12)" stroke-width="1"/>
+    <circle cx="60"   cy="860" r="90"  fill="none" stroke="rgba(255,194,0,0.10)" stroke-width="1"/>
+
+    <!-- horizontal accent lines -->
+    <line x1="0" y1="450" x2="1440" y2="450" stroke="rgba(255,194,0,0.07)" stroke-width="1"/>
+    <line x1="0" y1="60"  x2="1440" y2="60"  stroke="rgba(255,194,0,0.07)" stroke-width="1"/>
+
+    <!-- scan line -->
+    <rect class="scan-line" x="0" y="0" width="1440" height="2" fill="rgba(255,194,0,0.18)"/>
+
+    <!-- CAT triangle motif top-right -->
+    <polygon points="1300,0 1440,0 1440,160" fill="rgba(255,194,0,0.10)"/>
+    <polygon points="1380,0 1440,0 1440,80"  fill="rgba(255,194,0,0.10)"/>
+
+    <!-- dot cluster center-right (animated) -->
+    <circle class="dot-a1" cx="1100" cy="480" r="3" fill="rgba(255,194,0,0.55)"/>
+    <circle class="dot-a2" cx="1124" cy="480" r="3" fill="rgba(255,194,0,0.40)"/>
+    <circle class="dot-a3" cx="1148" cy="480" r="3" fill="rgba(255,194,0,0.25)"/>
+    <circle class="dot-a4" cx="1100" cy="504" r="3" fill="rgba(255,194,0,0.40)"/>
+    <circle class="dot-a5" cx="1124" cy="504" r="3" fill="rgba(255,194,0,0.25)"/>
+    <circle class="dot-a6" cx="1148" cy="504" r="3" fill="rgba(255,194,0,0.15)"/>
+    <circle class="dot-a7" cx="1100" cy="528" r="3" fill="rgba(255,194,0,0.25)"/>
+    <circle class="dot-a8" cx="1124" cy="528" r="3" fill="rgba(255,194,0,0.15)"/>
+
+    <!-- dot cluster bottom-center (animated) -->
+    <circle class="dot-a3" cx="700" cy="820" r="2.5" fill="rgba(255,194,0,0.45)"/>
+    <circle class="dot-a5" cx="724" cy="820" r="2.5" fill="rgba(255,194,0,0.30)"/>
+    <circle class="dot-a7" cx="748" cy="820" r="2.5" fill="rgba(255,194,0,0.18)"/>
+    <circle class="dot-a2" cx="700" cy="844" r="2.5" fill="rgba(255,194,0,0.30)"/>
+    <circle class="dot-a6" cx="724" cy="844" r="2.5" fill="rgba(255,194,0,0.18)"/>
+    <circle class="dot-a8" cx="700" cy="868" r="2.5" fill="rgba(255,194,0,0.18)"/>
+  </svg>
+</div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <img src="Imagenes/MADISA-logo-vector1.png" alt="MADISA CAT">
+    <div class="topbar-divider"></div>
+    <span class="topbar-title">Portal de Compras</span>
+  </div>
+  <div class="topbar-right">
+    <div class="user-chip">
+      <div class="user-avatar" id="avatarInitials">AD</div>
+      <span class="user-name" id="userName">Admin</span>
+    </div>
+    <button class="btn-logout" onclick="window.location.href='login.html'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Salir
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- WELCOME -->
+  <div class="welcome">
+    <div class="welcome-label">Bienvenido de vuelta</div>
+    <div class="welcome-title">Portal de <span>Compras</span></div>
+    <div class="welcome-sub">Selecciona una herramienta para comenzar</div>
+  </div>
+
+  <!-- APPS -->
+  <div class="section-label"><span>Herramientas</span></div>
+  <div class="app-grid">
+
+    <!-- Órdenes de compra -->
+    <a class="app-tile" href="ordenes.html" data-rol="comprador">
+      <div class="tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>
+      <div class="tile-name">Órdenes de Compra</div>
+    </a>
+
+    <!-- Proveedores -->
+    <a class="app-tile" href="proveedores.html" data-rol="comprador">
+      <div class="tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="tile-name">Proveedores</div>
+    </a>
+
+    <!-- Análisis de precios -->
+    <a class="app-tile" href="precios.html" data-rol="comprador">
+      <div class="tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/>
+        </svg>
+      </div>
+      <div class="tile-name">Análisis de Precios</div>
+    </a>
+
+    <!-- Reportes / KPIs -->
+    <a class="app-tile" href="reportes.html" data-rol="comprador">
+      <div class="tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6"  y1="20" x2="6"  y2="14"/>
+        </svg>
+      </div>
+      <div class="tile-name">Reportes y KPIs</div>
+    </a>
+
+  </div>
+
+  <!-- PORTALES -->
+  <div class="section-label" style="margin-top: 2.5rem;"><span>Portales</span></div>
+  <div class="app-grid">
+
+    <a class="app-tile" href="http://webservprd/MTS/Inicio/Inicio" target="_blank">
+      <div class="tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      </div>
+      <div class="tile-name">MTS</div>
+    </a>
+
+    <a class="app-tile" href="https://madisa-prod.operations.dynamics.com/?cmp=mdi&mi=DefaultDashboard&lng=en-us" target="_blank">
+      <div class="tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      </div>
+      <div class="tile-name">NAXT</div>
+    </a>
+
+    <a class="app-tile" href="https://app.powerbi.com/groups/me/apps/86a5951a-3c6e-42c9-b6fd-e161e2b5ff80/reports/d07062d0-da57-4ecc-83ee-87cec3ce0105/742faa910186f61acb16?ctid=e1f30a39-f909-45fb-95e3-a9efc0b93658&experience=power-bi" target="_blank">
+      <div class="tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      </div>
+      <div class="tile-name">SILO</div>
+    </a>
+
+  </div>
+
+</main>
+
+<script>
+  const rol = localStorage.getItem('madisa_rol') || 'comprador';
+
+  // Chip de perfil
+  const rolLabel  = rol === 'comprador' ? 'Comprador' : 'Vendedor';
+  const rolInitial = rol === 'comprador' ? 'C' : 'V';
+  document.getElementById('userName').textContent   = rolLabel;
+  document.getElementById('avatarInitials').textContent = rolInitial;
+
+  // Color del avatar según rol
+  if (rol === 'vendedor') {
+    document.querySelector('.user-avatar').style.background = '#3498DB';
+    document.querySelector('.user-avatar').style.color = '#fff';
+  }
+
+  // Mostrar/ocultar tiles según rol
+  // data-rol="comprador" = solo compradores; sin data-rol = todos
+  document.querySelectorAll('.app-tile[data-rol]').forEach(tile => {
+    const requiere = tile.getAttribute('data-rol');
+    if (requiere === 'comprador' && rol !== 'comprador') {
+      tile.style.display = 'none';
+    }
+  });
+
+  // Si es vendedor, ocultar la sección "Herramientas" completa si quedó vacía
+  if (rol === 'vendedor') {
+    const herramientasGrid = document.querySelector('.section-label + .app-grid');
+    const visibles = herramientasGrid ? herramientasGrid.querySelectorAll('.app-tile:not([style*="none"])') : [];
+    if (visibles.length === 0) {
+      herramientasGrid.previousElementSibling.style.display = 'none'; // label
+      herramientasGrid.style.display = 'none';
+    }
+    // Mensaje de bienvenida adaptado
+    document.querySelector('.welcome-sub').textContent = 'Selecciona un portal para continuar';
+  }
+
+  // Entrada escalonada de tiles visibles
+  document.querySelectorAll('.app-tile:not([style*="none"])').forEach((tile, i) => {
+    tile.style.animationDelay = (0.5 + i * 0.08) + 's';
+  });
+</script>
+</body>
+</html>

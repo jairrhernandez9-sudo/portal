@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MADISA — Portal de Compras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --yellow:   #FFC200;
+    --yellow-lt:#FFD04D;
+    --black:    #111111;
+    --black-2:  #181818;
+    --black-3:  #222222;
+    --black-4:  #2C2C2C;
+    --white:    #FFFFFF;
+    --gray:     #888888;
+    --gray-lt:  #BBBBBB;
+    --border:   #2A2A2A;
+    --blue:     #3498DB;
+    --input-bg: #1E1E1E;
+  }
+  html, body { height: 100%; font-family: 'Barlow', sans-serif; background: var(--black); color: var(--white); overflow-x: hidden; }
+
+  /* BG */
+  .bg-deco { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .bg-deco svg { width: 100%; height: 100%; }
+
+  /* WRAPPER */
+  .wrapper {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 2rem;
+  }
+
+  /* LOGO */
+  .logo-wrap {
+    margin-bottom: 2rem; text-align: center;
+    opacity: 0; animation: fadeUp 0.5s 0.1s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+  .logo-wrap img { height: 50px; }
+
+  /* SCREENS */
+  .screen { width: 100%; max-width: 560px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── SCREEN 1: SELECTOR ── */
+  .heading { text-align: center; margin-bottom: 2rem; }
+  .accent-bar { width: 36px; height: 4px; background: var(--yellow); border-radius: 2px; margin: 0 auto 1rem; }
+  .heading h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.75rem; font-weight: 800;
+    text-transform: uppercase; color: var(--white); margin-bottom: 5px;
+  }
+  .heading p { font-size: 0.875rem; color: var(--gray); }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .profile-card {
+    background: var(--black-2); border: 2px solid var(--border);
+    border-radius: 16px; padding: 28px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.18s;
+    position: relative; overflow: hidden;
+  }
+  .profile-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.25s ease; border-radius: 16px 16px 0 0;
+  }
+  .profile-card:hover { background: var(--black-3); transform: translateY(-3px); }
+  .profile-card:active { transform: scale(0.98); }
+
+  .profile-card.comprador { }
+  .profile-card.comprador::before { background: var(--yellow); }
+  .profile-card.comprador:hover { border-color: var(--yellow); }
+  .profile-card.comprador:hover::before { transform: scaleX(1); }
+
+  .profile-card.vendedor::before { background: var(--blue); }
+  .profile-card.vendedor:hover { border-color: var(--blue); }
+  .profile-card.vendedor:hover::before { transform: scaleX(1); }
+
+  .card-icon {
+    width: 64px; height: 64px; border-radius: 16px;
+    background: var(--black-3);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .card-icon svg { width: 30px; height: 30px; fill: none; stroke-width: 1.6; stroke: var(--gray); transition: stroke 0.2s; }
+  .profile-card.comprador:hover .card-icon { background: rgba(255,194,0,0.1); }
+  .profile-card.comprador:hover .card-icon svg { stroke: var(--yellow); }
+  .profile-card.vendedor:hover  .card-icon { background: rgba(52,152,219,0.1); }
+  .profile-card.vendedor:hover  .card-icon svg { stroke: var(--blue); }
+
+  .card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem; font-weight: 800;
+    text-transform: uppercase; color: var(--white);
+  }
+  .card-desc { font-size: 0.76rem; color: var(--gray); text-align: center; line-height: 1.5; }
+
+  .card-badge {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; padding: 3px 10px; border-radius: 20px;
+  }
+  .badge-lock { background: rgba(255,194,0,0.12); color: var(--yellow); }
+  .badge-free { background: rgba(52,152,219,0.12); color: var(--blue); }
+
+  .card-pills { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+  .card-pill {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.7rem; font-weight: 600; color: var(--gray);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .card-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .profile-card.comprador:hover .card-pill { color: rgba(255,194,0,0.65); }
+  .profile-card.comprador:hover .card-pill::before { background: var(--yellow); }
+  .profile-card.vendedor:hover  .card-pill { color: rgba(52,152,219,0.75); }
+  .profile-card.vendedor:hover  .card-pill::before { background: var(--blue); }
+
+  /* ── SCREEN 2: LOGIN COMPRADOR ── */
+  .login-box {
+    background: var(--black-2); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px;
+  }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: none; border: none; cursor: pointer;
+    color: var(--gray); font-family: 'Barlow', sans-serif;
+    font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 0; margin-bottom: 20px;
+    transition: color 0.15s;
+  }
+  .back-btn:hover { color: var(--yellow); }
+  .back-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+  .login-header { margin-bottom: 22px; }
+  .login-header .accent-bar { margin: 0 0 14px; }
+  .login-header h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.7rem; font-weight: 800;
+    text-transform: uppercase; color: var(--white); margin-bottom: 4px;
+  }
+  .login-header p { font-size: 0.85rem; color: var(--gray); }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block; font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray); margin-bottom: 7px;
+  }
+  .input-wrap { position: relative; }
+  .input-wrap svg.ico {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px; stroke: var(--gray); fill: none; stroke-width: 2; pointer-events: none;
+  }
+  .input-wrap input {
+    width: 100%; background: var(--input-bg); border: 1.5px solid #2E2E2E;
+    border-radius: 7px; padding: 12px 12px 12px 40px;
+    font-family: 'Barlow', sans-serif; font-size: 0.9rem; color: var(--white);
+    outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input-wrap input::placeholder { color: #404040; }
+  .input-wrap input:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(255,194,0,0.1); }
+
+  .toggle-pass {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: var(--gray); padding: 0; line-height: 0; transition: color 0.15s;
+  }
+  .toggle-pass:hover { color: var(--yellow); }
+
+  .error-msg {
+    display: none; background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.3);
+    border-radius: 7px; padding: 10px 14px; font-size: 0.82rem; color: #FF8080;
+    margin-bottom: 14px; align-items: center; gap: 8px;
+  }
+  .error-msg.visible { display: flex; }
+
+  .btn-login {
+    width: 100%; background: var(--yellow); color: var(--black); border: none;
+    border-radius: 7px; padding: 13px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    position: relative; overflow: hidden; margin-top: 6px;
+  }
+  .btn-login:hover  { background: var(--yellow-lt); }
+  .btn-login:active { transform: scale(0.98); }
+  .btn-login.loading { pointer-events: none; color: transparent; }
+  .btn-login.loading::after {
+    content: ''; position: absolute; width: 18px; height: 18px;
+    border: 2.5px solid var(--black); border-top-color: transparent; border-radius: 50%;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    animation: spin 0.65s linear infinite;
+  }
+  .btn-login.success { background: #2ECC71; color: #fff; pointer-events: none; }
+  @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+  @keyframes shake {
+    10%,90% { transform: translateX(-3px); } 20%,80% { transform: translateX(5px); }
+    30%,50%,70% { transform: translateX(-5px); } 40%,60% { transform: translateX(5px); }
+  }
+
+  /* TRANSITIONS */
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn   { from { opacity:0; transform:scale(0.97); }      to { opacity:1; transform:scale(1); }     }
+  @keyframes slideLeft{ from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+
+  #screen1.active { animation: fadeUp 0.45s 0.25s cubic-bezier(0.22,1,0.36,1) both; }
+  #screen2.active { animation: slideLeft 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+
+  .note { margin-top: 1.5rem; font-size: 0.74rem; color: #444; text-align: center; }
+
+  @media (max-width: 480px) {
+    .cards { grid-template-columns: 1fr; }
+    .screen { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- BG -->
+<div class="bg-deco">
+  <svg viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,194,0,0.06)" stroke-width="0.8"/>
+      </pattern>
+      <radialGradient id="g1" cx="50%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="rgba(255,194,0,0.06)"/>
+        <stop offset="100%" stop-color="rgba(255,194,0,0)"/>
+      </radialGradient>
+    </defs>
+    <rect width="1440" height="900" fill="url(#grid)"/>
+    <rect width="1440" height="900" fill="url(#g1)"/>
+    <polygon points="1300,0 1440,0 1440,160" fill="rgba(255,194,0,0.07)"/>
+    <polygon points="1390,0 1440,0 1440,70"  fill="rgba(255,194,0,0.06)"/>
+    <circle cx="1400" cy="80"  r="260" fill="none" stroke="rgba(255,194,0,0.08)" stroke-width="1"/>
+    <circle cx="1400" cy="80"  r="170" fill="none" stroke="rgba(255,194,0,0.06)" stroke-width="1"/>
+    <circle cx="40"   cy="860" r="200" fill="none" stroke="rgba(255,194,0,0.07)" stroke-width="1"/>
+    <circle cx="40"   cy="860" r="110" fill="none" stroke="rgba(255,194,0,0.05)" stroke-width="1"/>
+  </svg>
+</div>
+
+<div class="wrapper">
+  <div class="logo-wrap">
+    <img src="Imagenes/MADISA-logo-vector1.png" alt="MADISA CAT">
+  </div>
+
+  <!-- SCREEN 1: SELECTOR -->
+  <div class="screen active" id="screen1">
+    <div class="heading">
+      <div class="accent-bar"></div>
+      <h1>¿Cómo deseas ingresar?</h1>
+      <p>Selecciona tu perfil para continuar</p>
+    </div>
+
+    <div class="cards">
+      <!-- COMPRADOR -->
+      <div class="profile-card comprador" onclick="irALogin()">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        </div>
+        <div class="card-name">Comprador</div>
+        <span class="card-badge badge-lock">🔒 Requiere acceso</span>
+        <div class="card-desc">Acceso completo a todas las herramientas del portal</div>
+        <div class="card-pills">
+          <div class="card-pill">Órdenes de compra</div>
+          <div class="card-pill">Proveedores</div>
+          <div class="card-pill">Análisis de precios</div>
+          <div class="card-pill">Reportes y KPIs</div>
+          <div class="card-pill">Portales externos</div>
+        </div>
+      </div>
+
+      <!-- VENDEDOR -->
+      <div class="profile-card vendedor" onclick="entrarVendedor()">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div class="card-name">Vendedor</div>
+        <span class="card-badge badge-free">Acceso directo</span>
+        <div class="card-desc">Entra sin contraseña a los portales externos</div>
+        <div class="card-pills">
+          <div class="card-pill">Portal MTS</div>
+          <div class="card-pill">Portal NAXT</div>
+          <div class="card-pill">Portal SILO</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">Selecciona tu perfil para ver las herramientas disponibles</div>
+  </div>
+
+  <!-- SCREEN 2: LOGIN COMPRADOR -->
+  <div class="screen" id="screen2">
+    <div class="login-box">
+      <button class="back-btn" onclick="volver()">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Volver
+      </button>
+
+      <div class="login-header">
+        <div class="accent-bar"></div>
+        <h2>Acceso Comprador</h2>
+        <p>Ingresa tus credenciales para continuar</p>
+      </div>
+
+      <div class="error-msg" id="errorMsg">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+          <circle cx="12" cy="16" r="0.8" fill="currentColor" stroke="none"/>
+        </svg>
+        <span id="errorText">Usuario o contraseña incorrectos.</span>
+      </div>
+
+      <div class="form-group">
+        <label>Usuario</label>
+        <div class="input-wrap">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input type="text" id="username" placeholder="usuario@madisa.com" autocomplete="username">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Contraseña</label>
+        <div class="input-wrap">
+          <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+          <button class="toggle-pass" id="togglePass" type="button">
+            <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-login" id="loginBtn" type="button" onclick="handleLogin()">
+        Entrar al portal
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const s1 = document.getElementById('screen1');
+  const s2 = document.getElementById('screen2');
+
+  function irALogin() {
+    s1.classList.remove('active');
+    s2.classList.add('active');
+    setTimeout(() => document.getElementById('username').focus(), 100);
+  }
+
+  function volver() {
+    s2.classList.remove('active');
+    s1.classList.add('active');
+    clearError();
+  }
+
+  function entrarVendedor() {
+    localStorage.setItem('madisa_rol', 'vendedor');
+    irAlDashboard();
+  }
+
+  function irAlDashboard() {
+    document.querySelector('.wrapper').style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+    document.querySelector('.wrapper').style.opacity = '0';
+    document.querySelector('.wrapper').style.transform = 'scale(0.97)';
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 360);
+  }
+
+  // Toggle password
+  document.getElementById('togglePass').addEventListener('click', () => {
+    const p = document.getElementById('password');
+    const show = p.type === 'password';
+    p.type = show ? 'text' : 'password';
+    document.getElementById('eyeIcon').innerHTML = show
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  });
+
+  function showError(msg) {
+    const em = document.getElementById('errorMsg');
+    document.getElementById('errorText').textContent = msg;
+    em.classList.add('visible');
+    const box = document.querySelector('.login-box');
+    box.style.animation = 'shake 0.4s cubic-bezier(0.36,0.07,0.19,0.97)';
+    box.addEventListener('animationend', () => box.style.animation = '', { once: true });
+  }
+  function clearError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+    document.getElementById('username').style.borderColor = '';
+    document.getElementById('password').style.borderColor = '';
+  }
+
+  [document.getElementById('username'), document.getElementById('password')].forEach(i => {
+    i.addEventListener('input', clearError);
+    i.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+  });
+
+  function handleLogin() {
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value;
+    const btn  = document.getElementById('loginBtn');
+
+    if (!user) { showError('Ingresa tu usuario.'); return; }
+    if (!pass)  { showError('Ingresa tu contraseña.'); return; }
+
+    btn.classList.add('loading'); clearError();
+
+    setTimeout(() => {
+      btn.classList.remove('loading');
+      // ── Reemplaza esta lógica con tu API real ──
+      if (user === 'admin' && pass === '1234') {
+        btn.classList.add('success');
+        btn.textContent = '✓ Acceso concedido';
+        localStorage.setItem('madisa_rol', 'comprador');
+        localStorage.setItem('madisa_user', user);
+        setTimeout(() => irAlDashboard(), 700);
+      } else {
+        btn.textContent = 'Entrar al portal';
+        showError('Usuario o contraseña incorrectos.');
+      }
+    }, 1200);
+  }
+</script>
+</body>
+</html>

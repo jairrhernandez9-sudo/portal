@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MADISA — Directorio de Compradores</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --yellow:   #FFC200;
+  --yellow-lt:#FFD04D;
+  --black:    #111111;
+  --black-2:  #181818;
+  --black-3:  #222222;
+  --black-4:  #2C2C2C;
+  --white:    #FFFFFF;
+  --gray:     #888888;
+  --gray-lt:  #BBBBBB;
+  --border:   #2A2A2A;
+  --blue:     #3498DB;
+  --green:    #2ECC71;
+  --purple:   #9B59B6;
+}
+html, body { min-height: 100vh; font-family: 'Barlow', sans-serif; background: var(--black); color: var(--white); }
+@keyframes slideDown { from{opacity:0;transform:translateY(-100%)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp    { from{opacity:0;transform:translateY(14px)}  to{opacity:1;transform:translateY(0)} }
+
+/* TOPBAR */
+.topbar {
+  height: 56px; background: var(--black-2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; position: sticky; top: 0; z-index: 100;
+  animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.topbar-left img { height: 32px; }
+.topbar-divider { width: 1px; height: 26px; background: #333; }
+.topbar-title { font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-lt); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn-theme {
+  width: 34px; height: 34px; border-radius: 7px; border: 1px solid var(--border);
+  background: var(--black-3); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.btn-theme:hover { border-color: var(--yellow); background: rgba(255,194,0,0.08); }
+.btn-theme svg { width: 15px; height: 15px; stroke: var(--gray); fill: none; stroke-width: 2; }
+.btn-theme:hover svg { stroke: var(--yellow); }
+.btn-back {
+  display: flex; align-items: center; gap: 6px; background: none; border: 1px solid #333; border-radius: 5px;
+  padding: 6px 12px; color: var(--gray); font-size: 0.78rem; font-family: 'Barlow', sans-serif; font-weight: 600;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: border-color 0.15s, color 0.15s; text-decoration: none;
+}
+.btn-back:hover { border-color: var(--yellow); color: var(--yellow); }
+.btn-back svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+/* PAGE HEADER */
+.page-header { padding: 2rem 2rem 0; animation: fadeUp 0.5s 0.2s cubic-bezier(0.22,1,0.36,1) both; opacity: 0; }
+.page-header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.9rem; font-weight: 800; text-transform: uppercase; color: var(--white); }
+.page-header h1 span { color: var(--yellow); }
+.page-header p { font-size: 0.85rem; color: var(--gray); margin-top: 3px; }
+
+/* MAIN */
+.main { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+
+/* TABS */
+.tabs-bar {
+  display: flex; gap: 4px; margin-bottom: 1.5rem;
+  animation: fadeUp 0.5s 0.3s cubic-bezier(0.22,1,0.36,1) both; opacity: 0;
+}
+.tab-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 18px; border-radius: 8px; border: 1.5px solid var(--border);
+  background: var(--black-2); color: var(--gray);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; transition: all 0.18s;
+}
+.tab-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+.tab-btn:hover { color: var(--gray-lt); border-color: #444; }
+.tab-btn.active-mla  { background: rgba(52,152,219,0.1);  border-color: var(--blue);   color: #5DADE2; }
+.tab-btn.active-cat  { background: rgba(255,194,0,0.1);   border-color: var(--yellow); color: var(--yellow); }
+.tab-btn.active-marca{ background: rgba(155,89,182,0.1);  border-color: var(--purple); color: #BB8FCE; }
+
+/* SEARCH BAR */
+.search-bar {
+  display: flex; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap;
+  animation: fadeUp 0.5s 0.35s cubic-bezier(0.22,1,0.36,1) both; opacity: 0;
+}
+.sw { position: relative; flex: 1; min-width: 200px; }
+.sw svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: var(--gray); fill: none; stroke-width: 2; pointer-events: none; }
+.sw input {
+  width: 100%; background: var(--black-2); border: 1.5px solid #333; border-radius: 7px;
+  padding: 9px 12px 9px 34px; font-family: 'Barlow', sans-serif; font-size: 0.87rem; color: var(--white);
+  outline: none; transition: border-color 0.15s;
+}
+.sw input:focus { border-color: var(--yellow); }
+.sw input::placeholder { color: #444; }
+.btn-clear {
+  background: none; border: 1.5px solid #333; border-radius: 7px; padding: 9px 14px;
+  color: var(--gray); font-family: 'Barlow', sans-serif; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; text-transform: uppercase; transition: border-color 0.15s, color 0.15s;
+}
+.btn-clear:hover { border-color: #555; color: var(--gray-lt); }
+
+/* STATS */
+.stats-row {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1.25rem;
+  animation: fadeUp 0.5s 0.4s cubic-bezier(0.22,1,0.36,1) both; opacity: 0;
+}
+.stat-pill { background: var(--black-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; }
+.stat-pill .val { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--yellow); }
+.stat-pill .lbl { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray); }
+
+/* TAB CONTENT */
+.tab-pane { display: none; }
+.tab-pane.active { display: block; animation: fadeUp 0.3s cubic-bezier(0.22,1,0.36,1); }
+
+/* ── CARD GRID (Marcas Aliadas) ── */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.dir-card {
+  background: var(--black-2); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; transition: border-color 0.18s;
+}
+.dir-card:hover { border-color: #3A3A3A; }
+.dir-card-head {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.8rem; font-weight: 800;
+}
+.avatar-yellow { background: rgba(255,194,0,0.15); color: var(--yellow); }
+.avatar-blue   { background: rgba(52,152,219,0.15); color: #5DADE2; }
+.avatar-purple { background: rgba(155,89,182,0.15); color: #BB8FCE; }
+.avatar-green  { background: rgba(46,204,113,0.15); color: var(--green); }
+
+.dir-name { font-size: 0.9rem; font-weight: 700; color: var(--white); }
+.dir-sub  { font-size: 0.72rem; color: var(--gray); margin-top: 1px; }
+.dir-body { padding: 10px 16px; display: flex; flex-direction: column; gap: 6px; }
+.dir-row  { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--gray-lt); }
+.dir-row svg { width: 13px; height: 13px; stroke: var(--gray); fill: none; stroke-width: 2; flex-shrink: 0; }
+.dir-row a { color: var(--yellow); text-decoration: none; font-size: 0.78rem; }
+.dir-row a:hover { color: var(--yellow-lt); }
+.tag-list { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 16px 12px; }
+.tag {
+  background: var(--black-3); border: 1px solid var(--border); border-radius: 5px;
+  padding: 2px 8px; font-size: 0.68rem; font-weight: 600;
+  color: var(--gray); text-transform: uppercase; letter-spacing: 0.04em;
+}
+
+/* TABLE (Compradores) */
+.table-card { background: var(--black-2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.table-toolbar {
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.table-toolbar span { font-size: 0.75rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.06em; }
+.count-val { color: var(--yellow-lt); font-weight: 700; }
+.btn-export {
+  display: flex; align-items: center; gap: 6px; background: none; border: 1px solid #333;
+  border-radius: 6px; padding: 6px 12px; color: var(--gray); font-size: 0.75rem;
+  font-family: 'Barlow', sans-serif; font-weight: 600; cursor: pointer;
+  text-transform: uppercase; letter-spacing: 0.05em; transition: border-color 0.15s, color 0.15s;
+}
+.btn-export:hover { border-color: var(--yellow); color: var(--yellow); }
+.btn-export svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+.tw { overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--yellow) var(--black-3); }
+.tw::-webkit-scrollbar { height: 5px; }
+.tw::-webkit-scrollbar-track { background: var(--black-3); }
+.tw::-webkit-scrollbar-thumb { background: var(--yellow); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+thead tr { background: var(--black-3); }
+thead th {
+  padding: 10px 14px; text-align: left; font-size: 0.65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.09em; color: var(--gray); white-space: nowrap;
+  border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: color 0.15s;
+}
+thead th:hover { color: var(--yellow-lt); }
+thead th.sorted { color: var(--yellow); }
+tbody tr { border-bottom: 1px solid #1C1C1C; transition: background 0.1s; }
+tbody tr:hover { background: rgba(255,194,0,0.025); }
+tbody td { padding: 10px 14px; color: var(--gray-lt); white-space: nowrap; }
+tbody td.bold { color: var(--white); font-weight: 600; }
+tbody td a { color: var(--yellow); text-decoration: none; font-size: 0.78rem; }
+tbody td a:hover { color: var(--yellow-lt); }
+
+/* Avatar inline */
+.av-inline {
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.av-sm {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; font-weight: 800;
+}
+
+.hl { background: rgba(255,194,0,0.22); border-radius: 3px; padding: 0 2px; color: var(--white); }
+
+.empty-state { text-align: center; padding: 3rem; color: var(--gray); font-size: 0.88rem; }
+
+/* Light theme */
+body.light {
+  --black: #F5F5F0; --black-2: #FFFFFF; --black-3: #EFEFEB;
+  --black-4: #E0E0DA; --white: #111111; --gray: #666666;
+  --gray-lt: #333333; --border: #DDDDDA;
+}
+body.light .topbar { background: #FFFFFF; }
+body.light .topbar-divider { background: #DDD; }
+body.light .sw input { color: #111; }
+body.light .tag { background: #EFEFEB; }
+body.light .tw::-webkit-scrollbar-track { background: #E0E0DA; }
+
+footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: #333; border-top: 1px solid #1A1A1A; }
+@media (max-width: 600px) { .main { padding: 1rem; } .topbar { padding: 0 1rem; } .tabs-bar { flex-wrap: wrap; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <img src="Imagenes/MADISA-logo-vector1.png" alt="MADISA">
+    <div class="topbar-divider"></div>
+    <span class="topbar-title">Directorio de Compradores</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-theme" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="btn-back" href="compras.html">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Portal
+    </a>
+  </div>
+</header>
+
+<div class="page-header">
+  <h1>Directorio de <span>Compradores</span></h1>
+  <p>Consulta de compradores por marca, sucursal y área</p>
+</div>
+
+<main class="main">
+
+  <!-- TABS -->
+  <div class="tabs-bar">
+    <button class="tab-btn active-mla" onclick="cambiarTab('mla', this)">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Compradores MLA
+    </button>
+    <button class="tab-btn" onclick="cambiarTab('cat', this)">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Compradores CAT
+    </button>
+    <button class="tab-btn" onclick="cambiarTab('marca', this)">
+      <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Marcas Aliadas
+    </button>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-bar">
+    <div class="sw">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Buscar por nombre, correo, sucursal, marca..." oninput="filtrar()">
+    </div>
+    <button class="btn-clear" onclick="limpiar()">Limpiar</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-pill"><div class="val" id="statCount">0</div><div class="lbl">Resultados</div></div>
+    <div class="stat-pill"><div class="val" id="statPersonas">0</div><div class="lbl" id="statLbl">Compradores únicos</div></div>
+  </div>
+
+  <!-- TAB MLA -->
+  <div class="tab-pane active" id="pane-mla">
+    <div class="table-card">
+      <div class="table-toolbar">
+        <span>Compradores MLA por sucursal — <span class="count-val" id="countMLA">0</span> registros</span>
+        <button class="btn-export" onclick="exportar('mla')">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar CSV
+        </button>
+      </div>
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="ordenarTab('mla','sucursal',this)">Sucursal <span>↕</span></th>
+              <th onclick="ordenarTab('mla','comprador',this)">Comprador <span>↕</span></th>
+              <th>Correo</th>
+              <th onclick="ordenarTab('mla','encargado',this)">Encargado MLA <span>↕</span></th>
+              <th>Correo Encargado</th>
+            </tr>
+          </thead>
+          <tbody id="bodyMLA"></tbody>
+        </table>
+        <div class="empty-state" id="emptyMLA" style="display:none">Sin resultados.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB CAT -->
+  <div class="tab-pane" id="pane-cat">
+    <div class="table-card">
+      <div class="table-toolbar">
+        <span>Compradores CAT por sucursal — <span class="count-val" id="countCAT">0</span> registros</span>
+        <button class="btn-export" onclick="exportar('cat')">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar CSV
+        </button>
+      </div>
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="ordenarTab('cat','sucursal',this)">Sucursal <span>↕</span></th>
+              <th onclick="ordenarTab('cat','comprador',this)">Comprador <span>↕</span></th>
+              <th>Correo</th>
+              <th onclick="ordenarTab('cat','encargado',this)">Encargado CAT <span>↕</span></th>
+              <th>Correo Encargado</th>
+            </tr>
+          </thead>
+          <tbody id="bodyCAT"></tbody>
+        </table>
+        <div class="empty-state" id="emptyCAT" style="display:none">Sin resultados.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB MARCAS -->
+  <div class="tab-pane" id="pane-marca">
+    <div class="table-card">
+      <div class="table-toolbar">
+        <span>Marcas aliadas por comprador — <span class="count-val" id="countMarca">0</span> registros</span>
+        <button class="btn-export" onclick="exportar('marca')">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar CSV
+        </button>
+      </div>
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="ordenarTab('marca','sos',this)">SOS NAXT <span>↕</span></th>
+              <th onclick="ordenarTab('marca','nombre',this)">Nombre SOS NAXT <span>↕</span></th>
+              <th onclick="ordenarTab('marca','comprador',this)">Comprador <span>↕</span></th>
+              <th onclick="ordenarTab('marca','encargado',this)">Encargado <span>↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="bodyMarca"></tbody>
+        </table>
+        <div class="empty-state" id="emptyMarca" style="display:none">Sin resultados.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+<footer>© 2026 — MADISA Portal de Compras</footer>
+
+<script>
+// ── DATOS ──
+const MLA = [
+  {sucursal:"00",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"01",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"02",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"03",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"04",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"05",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"06",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"07",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"08",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"10",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"12",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"24",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"25",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"28",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"32",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"36",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"39",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"43",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"45",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"47",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"73",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"76",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"79",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"80",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"81",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"82",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"83",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"16",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"17",comprador:"Selene Quiroz",correo:"bsquiroz@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"1B",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"29",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"30",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"37",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"38",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"40",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"42",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"51",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"53",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"54",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"60",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"63",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"71",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"74",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"77",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"84",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"85",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"86",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"87",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"88",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"89",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"90",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"92",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"93",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"94",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"95",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"96",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"97",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+  {sucursal:"98",comprador:"Fatima Trejo",correo:"ftrejo@madisa.com",encargado:"Jonathan Garcia",correo2:"jegarcia@madisa.com"},
+];
+
+const CAT = [
+  {sucursal:"DE",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"78",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"85",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"84",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"81",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"80",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"79",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"77",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"74",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"64",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"58",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"47",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"43",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"42",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"30",comprador:"Alexa Cantú",correo:"acantu@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"DW",comprador:"Erick Saucedo",correo:"esaucedo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"DS",comprador:"Erick Saucedo",correo:"esaucedo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"09",comprador:"Erick Saucedo",correo:"esaucedo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"08",comprador:"Erick Saucedo",correo:"esaucedo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"03",comprador:"Erick Saucedo",correo:"esaucedo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"01",comprador:"Erick Saucedo",correo:"esaucedo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"00",comprador:"Erick Saucedo",correo:"esaucedo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"83",comprador:"Erick Saucedo",correo:"esaucedo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"VA",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"DJ",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"45",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"23",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"07",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"06",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"05",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"04",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"02",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"00",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"36",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"32",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"28",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"24",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"11",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"10",comprador:"Fernanda Baldazo",correo:"fbaldazo@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"DA",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"CH",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"CF",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"CE",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"76",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"73",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"66",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"63",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"62",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"60",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"46",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"44",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"39",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"21",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"19",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"15",comprador:"Ibeth Diaz",correo:"idiaz@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"87",comprador:"Jair Hernandez",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"82",comprador:"Jair Hernandez",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"48",comprador:"Jair Hernandez",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"38",comprador:"Jair Hernandez",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"DN",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"DI",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"DD",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"89",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"75",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"1C",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"1A",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"98",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"97",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"96",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"94",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"93",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"90",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"88",comprador:"Karent Fraga",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"56",comprador:"Karent Fraga",correo:"kfraga@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"37",comprador:"Karent Fraga",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"1B",comprador:"Tanya Espino",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"95",comprador:"Tanya Espino",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"92",comprador:"Tanya Espino",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"86",comprador:"Tanya Espino",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"71",comprador:"Tanya Espino",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"69",comprador:"Tanya Espino",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"68",comprador:"Tanya Espino",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"49",comprador:"Tanya Espino",correo:"tanya_espino@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"54",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"53",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"51",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"40",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"29",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"25",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"17",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"16",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"13",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+  {sucursal:"12",comprador:"Zurisadai Arguello",correo:"zarguello@madisa.com",encargado:"Oscar Mendoza",correo2:"oemendoza@madisa.com"},
+];
+
+const MARCA = [
+  {sos:"001",nombre:"Cat Kits",comprador:"Planeación",encargado:"Planeación"},
+  {sos:"002",nombre:"Cat Refacciones por Maq",comprador:"Cristina Castillo",encargado:"Cristina Castillo"},
+  {sos:"003",nombre:"Garantías Extendidas",comprador:"Soporte",encargado:"Soporte"},
+  {sos:"004",nombre:"Cat Mangueras",comprador:"Planeación",encargado:"Planeación"},
+  {sos:"005",nombre:"Componentes Intercambio",comprador:"CAT TRASPASOS",encargado:"Oscar Mendoza"},
+  {sos:"006",nombre:"Seminuevas y Mineria",comprador:"CAT TRASPASOS",encargado:"Oscar Mendoza"},
+  {sos:"007",nombre:"Kress",comprador:"Elsa Delgado",encargado:"Karla Torres"},
+  {sos:"036",nombre:"Cat Motores MWM",comprador:"Karent Fraga",encargado:"Karla Torres"},
+  {sos:"051",nombre:"Cummins",comprador:"ALTERNOS TRASPASOS",encargado:"Ana Sosa"},
+  {sos:"076",nombre:"Himoinsa",comprador:"Dayanara Zapata",encargado:"Karla Torres"},
+  {sos:"091",nombre:"Adblue",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"106",nombre:"Cat Lubricantes",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"107",nombre:"Mobil lubricantes",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"121",nombre:"Chevron Lubricantes",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"122",nombre:"Otras Lubricantes",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"141",nombre:"Baldwin",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"142",nombre:"Filtros Donaldson",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"143",nombre:"Otros Filtros (USD)",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"144",nombre:"Otros Filtros (MXN)",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"186",nombre:"Michelin",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"187",nombre:"Goodyear (MXN)",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"188",nombre:"Goodyear (USD)",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"189",nombre:"Yokohama (MXN)",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"190",nombre:"Yokohama (USD)",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"191",nombre:"Pirelli",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"192",nombre:"Titan (MXN)",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"193",nombre:"Titan (USD)",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"194",nombre:"JK Tornel",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"195",nombre:"Camso",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"196",nombre:"Trelleborg",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"197",nombre:"Aeneas",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"198",nombre:"Otras Llantas (USD)",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"199",nombre:"Triangle",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"200",nombre:"Techking",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"201",nombre:"Bridgestone",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"202",nombre:"Aeolus",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"203",nombre:"Continental",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"204",nombre:"Otras Llantas (MXN)",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"205",nombre:"Ascenso",comprador:"Carlos Miguel Rodriguez",encargado:"Guadalupe Enciso"},
+  {sos:"286",nombre:"Hoist",comprador:"Selene Quiroz",encargado:"Jonathan Garcia"},
+  {sos:"299",nombre:"Cascade",comprador:"Selene Quiroz",encargado:"Jonathan Garcia"},
+  {sos:"301",nombre:"Combilift",comprador:"Fatima Trejo",encargado:"Jonathan Garcia"},
+  {sos:"302",nombre:"MaxLift",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"321",nombre:"Terberg",comprador:"Elsa Delgado",encargado:"Karla Torres"},
+  {sos:"351",nombre:"MAN VW",comprador:"Edgar Alvarado",encargado:"Karla Torres"},
+  {sos:"356",nombre:"SEM",comprador:"Karent Fraga",encargado:"Karla Torres"},
+  {sos:"361",nombre:"Rockmore",comprador:"Emely Ramos",encargado:"Karla Torres"},
+  {sos:"381",nombre:"Epiroc",comprador:"Emely Ramos",encargado:"Karla Torres"},
+  {sos:"386",nombre:"Resemin",comprador:"Edgar Alvarado",encargado:"Karla Torres"},
+  {sos:"406",nombre:"Nilfisk",comprador:"Fatima Trejo",encargado:"Jonathan Garcia"},
+  {sos:"411",nombre:"Donaldson Colectores",comprador:"Fatima Trejo",encargado:"Jonathan Garcia"},
+  {sos:"416",nombre:"Sullair",comprador:"Elsa Delgado",encargado:"Karla Torres"},
+  {sos:"421",nombre:"IR Tools",comprador:"NO CAT TRASPASOS",encargado:"Karla Torres"},
+  {sos:"426",nombre:"IR Compressors",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"427",nombre:"Atlas Copco",comprador:"Elsa Delgado",encargado:"Karla Torres"},
+  {sos:"441",nombre:"Cipsa",comprador:"Jonathan Garcia/Angel Garcia",encargado:"Karla Torres"},
+  {sos:"446",nombre:"Genie",comprador:"Dolores Gatica",encargado:"Karla Torres"},
+  {sos:"451",nombre:"Haulotte",comprador:"Edgar Alvarado",encargado:"Karla Torres"},
+  {sos:"456",nombre:"Husqvarna",comprador:"Jonathan Garcia/Elsa Delgado",encargado:"Karla Torres"},
+  {sos:"461",nombre:"Zoomlion",comprador:"Angel García",encargado:"Karla Torres"},
+  {sos:"471",nombre:"Wacker Neuson",comprador:"Jonathan Garcia/Angel Garcia",encargado:"Karla Torres"},
+  {sos:"491",nombre:"Equipo ligero (MXN)",comprador:"Jonathan Garcia",encargado:"Jonathan Garcia"},
+  {sos:"492",nombre:"Equipo ligero (USD)",comprador:"Jonathan Garcia",encargado:"Jonathan Garcia"},
+  {sos:"541",nombre:"Doosan",comprador:"Elsa Delgado",encargado:"Karla Torres"},
+  {sos:"542",nombre:"IR Portátiles",comprador:"NO CAT TRASPASOS",encargado:"Karla Torres"},
+  {sos:"576",nombre:"Margui",comprador:"Edgar Alvarado",encargado:"Karla Torres"},
+  {sos:"591",nombre:"Astec",comprador:"Dayanara Zapata",encargado:"Karla Torres"},
+  {sos:"596",nombre:"Cifa",comprador:"NO CAT TRASPASOS",encargado:"Karla Torres"},
+  {sos:"601",nombre:"Carmix",comprador:"Fatima Trejo",encargado:"Jonathan Garcia"},
+  {sos:"611",nombre:"McCloskey",comprador:"Elsa Delgado",encargado:"Karla Torres"},
+  {sos:"631",nombre:"JLG",comprador:"Emely Ramos",encargado:"Karla Torres"},
+  {sos:"636",nombre:"Link Belt",comprador:"Dayanara Zapata",encargado:"Karla Torres"},
+  {sos:"641",nombre:"Manitex",comprador:"Dolores Gatica",encargado:"Karla Torres"},
+  {sos:"646",nombre:"Palfinger",comprador:"Dolores Gatica",encargado:"Karla Torres"},
+  {sos:"647",nombre:"Weiler",comprador:"Fatima Trejo",encargado:"Jonathan Garcia"},
+  {sos:"648",nombre:"Hiab",comprador:"Elsa Delgado",encargado:"Karla Torres"},
+  {sos:"653",nombre:"Terex",comprador:"Dolores Gatica",encargado:"Karla Torres"},
+  {sos:"658",nombre:"CNH Qro (MXN)",comprador:"Nestor Lopez",encargado:"Jonathan Garcia"},
+  {sos:"659",nombre:"CNH Qro (USD)",comprador:"Nestor Lopez",encargado:"Jonathan Garcia"},
+  {sos:"660",nombre:"CNH Ext (USD)",comprador:"Nestor Lopez",encargado:"Jonathan Garcia"},
+  {sos:"668",nombre:"Amacsa",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"669",nombre:"Amssa",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"670",nombre:"Semillas Aspross",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"671",nombre:"Clavos Nacionales",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"672",nombre:"Durable",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"673",nombre:"Famaq",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"674",nombre:"Industrias Cabrera",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"675",nombre:"Molinos Azteca",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"676",nombre:"Sembradoras Dobladenses",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"677",nombre:"Semillas Ceres",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"678",nombre:"Swissmex",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"679",nombre:"Tecnomec",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"680",nombre:"Toldos Guadalajara",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"681",nombre:"Toyo",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"682",nombre:"Allmand",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"683",nombre:"Goodman",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"684",nombre:"K-Line",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"685",nombre:"Poliexcel",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"686",nombre:"Sysmap",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"687",nombre:"Terramak",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"688",nombre:"Wilcox",comprador:"Fatima Trejo",encargado:"Jonathan Garcia"},
+  {sos:"689",nombre:"Juscafresa",comprador:"Felix Navarrete",encargado:"Jonathan Garcia"},
+  {sos:"738",nombre:"Miscelaneos y Herramientas Interno",comprador:"Juan Armendariz",encargado:"Julia Medina"},
+  {sos:"739",nombre:"Misceláneos y Herramientas Retail (MXN)",comprador:"Jonathan Garcia",encargado:"Jonathan Garcia"},
+  {sos:"740",nombre:"Misceláneos y Herramientas Retail (USD)",comprador:"Jonathan Garcia",encargado:"Jonathan Garcia"},
+  {sos:"741",nombre:"Promocionales Interno (MXN)",comprador:"Juan Armendariz",encargado:"Julia Medina"},
+  {sos:"742",nombre:"Promocionales Interno (USD)",comprador:"Juan Armendariz",encargado:"Julia Medina"},
+  {sos:"743",nombre:"Promocionales Retail (MXN)",comprador:"Emely Ramos",encargado:"Karla Torres"},
+  {sos:"744",nombre:"Promocionales Retail (USD)",comprador:"Dolores Gatica",encargado:"Karla Torres"},
+  {sos:"808",nombre:"Bitelli",comprador:"Karent Fraga",encargado:"Karla Torres"},
+  {sos:"809",nombre:"Dega",comprador:"Emely Ramos",encargado:"Karla Torres"},
+  {sos:"810",nombre:"Hkx",comprador:"Emely Ramos",encargado:"Karla Torres"},
+  {sos:"811",nombre:"Noram Weiler",comprador:"Emely Ramos",encargado:"Karla Torres"},
+  {sos:"812",nombre:"Olympian",comprador:"Karent Fraga",encargado:"Karla Torres"},
+  {sos:"813",nombre:"Literatura, Manuales y Folletos",comprador:"Selene Quiroz/Karent Fraga",encargado:"Karla Torres"},
+  {sos:"815",nombre:"Licencias Y Suscripciones",comprador:"Karent Fraga",encargado:"Karla Torres"},
+  {sos:"816",nombre:"Loctite",comprador:"NO CAT TRASPASOS",encargado:"Karla Torres"},
+  {sos:"817",nombre:"Partes Usadas",comprador:"Operación de Inventarios",encargado:"Operación de Inventarios"},
+  {sos:"818",nombre:"Material Dañado",comprador:"Operación de Inventarios",encargado:"Operación de Inventarios"},
+  {sos:"819",nombre:"Barras 4N",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"820",nombre:"Brunner & Lay",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"821",nombre:"Cordex",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"822",nombre:"Boart Long Year",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"823",nombre:"Komatsu",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"824",nombre:"Alpha",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"825",nombre:"Voltruck",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"826",nombre:"Haro Rent",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"827",nombre:"Otras Partes (MXN)",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+  {sos:"828",nombre:"Otras Partes (USD)",comprador:"Ana Sosa/Devani Hdz/ Francisco Gama",encargado:"Ana Sosa"},
+];
+
+// ── COLORES POR PERSONA ──
+const colores = {};
+const palette = ['avatar-yellow','avatar-blue','avatar-purple','avatar-green'];
+let ci = 0;
+function colorPara(nombre) {
+  if (!colores[nombre]) { colores[nombre] = palette[ci++ % palette.length]; }
+  return colores[nombre];
+}
+function iniciales(nombre) {
+  return nombre.split(/[\s\/]+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+function hl(t, q) {
+  if (!q || !t) return t || '—';
+  return t.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<span class="hl">$1</span>');
+}
+
+// ── ESTADO ──
+let tabActual = 'mla';
+const sortState = { mla:{col:'',asc:true}, cat:{col:'',asc:true}, marca:{col:'',asc:true} };
+let filtMLA   = [...MLA];
+let filtCAT   = [...CAT];
+let filtMarca = [...MARCA];
+
+function cambiarTab(tab, btn) {
+  tabActual = tab;
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn');
+  document.getElementById('pane-'+tab).classList.add('active');
+  btn.classList.add('active-'+tab);
+  filtrar();
+}
+
+function filtrar() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const campos = {
+    mla:   r => [r.sucursal, r.comprador, r.correo, r.encargado, r.correo2],
+    cat:   r => [r.sucursal, r.comprador, r.correo, r.encargado, r.correo2],
+    marca: r => [r.sos, r.nombre, r.comprador, r.encargado],
+  };
+  filtMLA   = MLA.filter(r   => !q || campos.mla(r).some(v=>v&&v.toLowerCase().includes(q)));
+  filtCAT   = CAT.filter(r   => !q || campos.cat(r).some(v=>v&&v.toLowerCase().includes(q)));
+  filtMarca = MARCA.filter(r => !q || campos.marca(r).some(v=>v&&v.toLowerCase().includes(q)));
+  renderActual(q);
+}
+
+function renderActual(q='') {
+  const qv = q || document.getElementById('searchInput').value.trim().toLowerCase();
+  if (tabActual==='mla')   renderMLA(qv);
+  if (tabActual==='cat')   renderCAT(qv);
+  if (tabActual==='marca') renderMarca(qv);
+}
+
+function renderMLA(q) {
+  const tbody = document.getElementById('bodyMLA');
+  const empty = document.getElementById('emptyMLA');
+  document.getElementById('countMLA').textContent = filtMLA.length;
+  actualizarStats(filtMLA.length, [...new Set(filtMLA.map(r=>r.comprador))].length, 'Compradores únicos');
+  if (!filtMLA.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = filtMLA.map(r => `
+    <tr>
+      <td class="bold">${hl(r.sucursal,q)}</td>
+      <td><div class="av-inline"><span class="av-sm ${colorPara(r.comprador)}">${iniciales(r.comprador)}</span>${hl(r.comprador,q)}</div></td>
+      <td><a href="mailto:${r.correo}">${hl(r.correo,q)}</a></td>
+      <td><div class="av-inline"><span class="av-sm ${colorPara(r.encargado)}">${iniciales(r.encargado)}</span>${hl(r.encargado,q)}</div></td>
+      <td><a href="mailto:${r.correo2}">${hl(r.correo2,q)}</a></td>
+    </tr>`).join('');
+}
+
+function renderCAT(q) {
+  const tbody = document.getElementById('bodyCAT');
+  const empty = document.getElementById('emptyCAT');
+  document.getElementById('countCAT').textContent = filtCAT.length;
+  actualizarStats(filtCAT.length, [...new Set(filtCAT.map(r=>r.comprador))].length, 'Compradores únicos');
+  if (!filtCAT.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = filtCAT.map(r => `
+    <tr>
+      <td class="bold">${hl(r.sucursal,q)}</td>
+      <td><div class="av-inline"><span class="av-sm ${colorPara(r.comprador)}">${iniciales(r.comprador)}</span>${hl(r.comprador,q)}</div></td>
+      <td><a href="mailto:${r.correo}">${hl(r.correo,q)}</a></td>
+      <td><div class="av-inline"><span class="av-sm ${colorPara(r.encargado)}">${iniciales(r.encargado)}</span>${hl(r.encargado,q)}</div></td>
+      <td><a href="mailto:${r.correo2}">${hl(r.correo2,q)}</a></td>
+    </tr>`).join('');
+}
+
+function renderMarca(q) {
+  const tbody = document.getElementById('bodyMarca');
+  const empty = document.getElementById('emptyMarca');
+  document.getElementById('countMarca').textContent = filtMarca.length;
+  actualizarStats(filtMarca.length, [...new Set(filtMarca.map(r=>r.comprador))].length, 'Compradores únicos');
+  if (!filtMarca.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = filtMarca.map(r => `
+    <tr>
+      <td class="bold">${hl(r.sos,q)}</td>
+      <td>${hl(r.nombre,q)}</td>
+      <td><div class="av-inline"><span class="av-sm ${colorPara(r.comprador)}">${iniciales(r.comprador)}</span>${hl(r.comprador,q)}</div></td>
+      <td><div class="av-inline"><span class="av-sm ${colorPara(r.encargado)}">${iniciales(r.encargado)}</span>${hl(r.encargado,q)}</div></td>
+    </tr>`).join('');
+}
+
+function actualizarStats(total, unicos, lbl) {
+  document.getElementById('statCount').textContent   = total;
+  document.getElementById('statPersonas').textContent = unicos;
+  document.getElementById('statLbl').textContent     = lbl;
+}
+
+function ordenarTab(tab, col, th) {
+  const st = sortState[tab];
+  st.asc = st.col === col ? !st.asc : true;
+  st.col = col;
+  const map = { mla: filtMLA, cat: filtCAT, marca: filtMarca };
+  map[tab].sort((a,b) => {
+    const va = (a[col]||'').toLowerCase();
+    const vb = (b[col]||'').toLowerCase();
+    return st.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  const tbody = tab==='mla' ? 'bodyMLA' : tab==='cat' ? 'bodyCAT' : 'bodyMarca';
+  document.querySelectorAll(`#pane-${tab} thead th`).forEach(t => { t.classList.remove('sorted'); t.querySelector('span').textContent='↕'; });
+  th.classList.add('sorted'); th.querySelector('span').textContent = st.asc ? '↑' : '↓';
+  renderActual();
+}
+
+function limpiar() { document.getElementById('searchInput').value=''; filtrar(); }
+
+function exportar(tab) {
+  const maps = {
+    mla:   { data: filtMLA,   cols: ['Sucursal','Comprador','Correo','Encargado MLA','Correo Encargado'], keys: ['sucursal','comprador','correo','encargado','correo2'] },
+    cat:   { data: filtCAT,   cols: ['Sucursal','Comprador','Correo','Encargado CAT','Correo Encargado'], keys: ['sucursal','comprador','correo','encargado','correo2'] },
+    marca: { data: filtMarca, cols: ['SOS NAXT','Nombre SOS NAXT','Comprador','Encargado'],               keys: ['sos','nombre','comprador','encargado'] },
+  };
+  const { data, cols, keys } = maps[tab];
+  const rows = data.map(r => keys.map(k=>`"${(r[k]||'').replace(/"/g,'""')}"`).join(','));
+  const csv  = [cols.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'}));
+  a.download = `Compradores_${tab.toUpperCase()}.csv`;
+  a.click();
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeIcon').innerHTML = isLight
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  localStorage.setItem('mts_theme', isLight ? 'light' : 'dark');
+}
+if (localStorage.getItem('mts_theme') === 'light') toggleTheme();
+
+filtrar();
+document.getElementById('searchInput').addEventListener('keydown', e => { if(e.key==='Enter') filtrar(); });
+</script>
+</body>
+</html>

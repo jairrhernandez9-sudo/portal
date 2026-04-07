@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MADISA — Herramientas de Compras</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --yellow:   #FFC200;
+  --yellow-lt:#FFD04D;
+  --black:    #111111;
+  --black-2:  #181818;
+  --black-3:  #222222;
+  --black-4:  #2C2C2C;
+  --white:    #FFFFFF;
+  --gray:     #888888;
+  --gray-lt:  #BBBBBB;
+  --border:   #2A2A2A;
+}
+html, body { min-height: 100vh; font-family: 'Barlow', sans-serif; background: var(--black); color: var(--white); }
+
+@keyframes fadeUp    { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideDown { from { opacity:0; transform:translateY(-100%); } to { opacity:1; transform:translateY(0); } }
+@keyframes tileIn    { from { opacity:0; transform:translateY(22px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes rotateSlow  { to { transform: rotate(360deg); } }
+@keyframes rotateSlowR { to { transform: rotate(-360deg); } }
+@keyframes pulseGlow   { 0%,100%{opacity:0.6} 50%{opacity:1} }
+@keyframes scanH       { from{transform:translateY(-100%)} to{transform:translateY(100vh)} }
+@keyframes floatIcon   { from{transform:translateY(0)} to{transform:translateY(-5px)} }
+@keyframes pulse       { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.4)} }
+
+/* BG */
+.bg-deco { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.bg-deco canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bg-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ring-1 { transform-origin: 1380px 80px; animation: rotateSlow 32s linear infinite; }
+.ring-2 { transform-origin: 1380px 80px; animation: rotateSlowR 20s linear infinite; }
+.ring-3 { transform-origin: 60px 860px; animation: rotateSlow 26s linear infinite; }
+.scan   { animation: scanH 7s 1s linear infinite; opacity: 0.2; }
+.tri-p  { animation: pulseGlow 4s ease-in-out infinite; }
+.tri-p2 { animation: pulseGlow 6s 1.5s ease-in-out infinite; }
+.dot-b1{animation:pulseGlow 2s 0s ease-in-out infinite}
+.dot-b2{animation:pulseGlow 2s 0.4s ease-in-out infinite}
+.dot-b3{animation:pulseGlow 2s 0.8s ease-in-out infinite}
+.dot-b4{animation:pulseGlow 2s 1.2s ease-in-out infinite}
+.dot-b5{animation:pulseGlow 2s 1.6s ease-in-out infinite}
+
+/* TOPBAR */
+.topbar {
+  height: 60px; background: rgba(17,17,17,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,194,0,0.08);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; position: sticky; top: 0; z-index: 100;
+  animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-left img { height: 34px; }
+.topbar-divider { width: 1px; height: 28px; background: #333; }
+.topbar-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-lt);
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.user-chip {
+  display: flex; align-items: center; gap: 9px;
+  background: rgba(34,34,34,0.8); border: 1px solid var(--border);
+  border-radius: 7px; padding: 6px 12px; backdrop-filter: blur(8px);
+}
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--yellow); color: var(--black);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 800;
+}
+.user-name { font-size: 0.82rem; font-weight: 600; color: var(--gray-lt); }
+.btn-theme {
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid #333;
+  background: rgba(34,34,34,0.8); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.btn-theme:hover { border-color: var(--yellow); background: rgba(255,194,0,0.08); }
+.btn-theme svg { width: 15px; height: 15px; stroke: var(--gray); fill: none; stroke-width: 2; }
+.btn-theme:hover svg { stroke: var(--yellow); }
+.btn-salir {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid #333; border-radius: 6px;
+  padding: 6px 12px; color: var(--gray); font-size: 0.78rem;
+  font-family: 'Barlow', sans-serif; font-weight: 600;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-salir:hover { border-color: var(--yellow); color: var(--yellow); }
+.btn-salir svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+/* MAIN */
+.main { max-width: 960px; margin: 0 auto; padding: 3rem 2rem; position: relative; z-index: 1; }
+
+.welcome { margin-bottom: 2.5rem; animation: fadeUp 0.5s 0.3s cubic-bezier(0.22,1,0.36,1) both; opacity: 0; }
+.welcome-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--gray); margin-bottom: 6px; }
+.welcome-title { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 800; text-transform: uppercase; color: var(--white); }
+.welcome-title span { color: var(--yellow); }
+.welcome-sub { font-size: 0.87rem; color: var(--gray); margin-top: 4px; }
+
+.section-label {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem;
+  animation: fadeUp 0.5s 0.45s cubic-bezier(0.22,1,0.36,1) both; opacity: 0;
+}
+.section-label span { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--gray); }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.section-label.delay2 { animation-delay: 0.6s; }
+
+.app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px,1fr)); gap: 14px; margin-bottom: 2.5rem; }
+
+.app-tile {
+  background: rgba(24,24,24,0.85); border: 1px solid var(--border);
+  border-radius: 14px; padding: 26px 16px 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 13px;
+  text-decoration: none; cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.15s;
+  position: relative; overflow: hidden;
+  opacity: 0; animation: tileIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
+  backdrop-filter: blur(6px);
+}
+.app-tile::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--yellow); transform: scaleX(0); transform-origin: left;
+  transition: transform 0.22s ease;
+}
+.app-tile:hover { border-color: #444; background: rgba(34,34,34,0.95); transform: translateY(-3px); }
+.app-tile:hover::before { transform: scaleX(1); }
+.app-tile:active { transform: scale(0.97); }
+
+.tile-icon {
+  width: 54px; height: 54px; background: var(--black-3);
+  border-radius: 13px; display: flex; align-items: center; justify-content: center;
+  position: relative; transition: background 0.18s;
+}
+.app-tile:hover .tile-icon { background: var(--black-4); animation: floatIcon 0.6s ease infinite alternate; }
+.app-tile:hover .tile-icon::after {
+  content: ''; position: absolute; inset: -5px; border-radius: 18px;
+  border: 1.5px solid rgba(255,194,0,0.3); animation: pulse 1.2s ease infinite;
+}
+.tile-icon svg { width: 26px; height: 26px; stroke: var(--yellow); fill: none; stroke-width: 1.8; }
+.tile-name {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--white); text-align: center; line-height: 1.2;
+}
+.app-tile.portal-tile::before { background: #3498DB; }
+.app-tile.portal-tile .tile-icon svg { stroke: #5DADE2; }
+
+/* ── EASTER EGG: TEMA ROSA ── */
+body.pink {
+  --yellow:   #FF69B4;
+  --yellow-lt:#FFB6C1;
+  --black:    #1A0A12;
+  --black-2:  #260D1A;
+  --black-3:  #33101F;
+  --black-4:  #401325;
+  --border:   #5C1F38;
+  --gray:     #C890A8;
+  --gray-lt:  #F0BFCF;
+}
+body.pink { background: #1A0A12; }
+body.pink .topbar { background: rgba(26,10,18,0.92); border-bottom-color: rgba(255,105,180,0.15); }
+body.pink .user-avatar { background: #FF69B4; }
+body.pink .app-tile::before { background: #FF69B4; }
+body.pink .tile-icon svg { stroke: #FF69B4; }
+body.pink .app-tile.portal-tile::before { background: #FF8FBF; }
+body.pink .app-tile.portal-tile .tile-icon svg { stroke: #FFB6D9; }
+body.pink .welcome-title span { color: #FF69B4; }
+body.pink .section-label span { color: #FF69B4; }
+body.pink .btn-theme { border-color: #5C1F38; background: rgba(64,19,37,0.8); }
+body.pink .btn-salir:hover { border-color: #FF69B4; color: #FF69B4; }
+body.pink .bg-svg rect { filter: hue-rotate(210deg) saturate(1.5); }
+body.pink #bgCanvas { filter: hue-rotate(210deg) saturate(2); }
+
+/* Toast */
+.easter-toast {
+  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: #FF69B4; color: #fff; padding: 12px 24px; border-radius: 30px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  z-index: 999; pointer-events: none;
+  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s;
+  opacity: 0;
+}
+.easter-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+body.light {
+  --black:   #F0F0EC; --black-2: #FFFFFF; --black-3: #EBEBЕ7;
+  --black-4: #DDDDD9; --white:   #111111; --gray:    #666666;
+  --gray-lt: #333333; --border:  #DADADА;
+}
+body.light { background: #F0F0EC; }
+body.light .topbar { background: rgba(255,255,255,0.95); border-bottom-color: #DDD; }
+body.light .topbar-divider { background: #DDD; }
+body.light .btn-theme { background: #EFEFEB; border-color: #DDD; }
+body.light .user-chip { background: #EFEFEB; border-color: #DDD; }
+body.light .btn-salir { border-color: #CCC; }
+body.light .app-tile { background: rgba(255,255,255,0.85); border-color: #DDD; }
+body.light .app-tile:hover { background: rgba(255,255,255,0.98); border-color: #BBB; }
+body.light .tile-icon { background: #EFEFEB; }
+body.light .app-tile:hover .tile-icon { background: #E0E0DA; }
+body.light .section-label::after { background: #DDD; }
+body.light footer { border-top-color: #DDD; color: #AAA; }
+
+footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: #333; border-top: 1px solid #1A1A1A; position: relative; z-index: 1; }
+
+@media (max-width: 600px) { .main { padding: 2rem 1rem; } .topbar { padding: 0 1rem; } .topbar-title { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- BG -->
+<div class="bg-deco">
+  <canvas id="bgCanvas"></canvas>
+  <svg class="bg-svg" viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,194,0,0.07)" stroke-width="0.8"/>
+      </pattern>
+      <radialGradient id="g1" cx="80%" cy="12%" r="52%">
+        <stop offset="0%" stop-color="rgba(255,194,0,0.18)"/>
+        <stop offset="100%" stop-color="rgba(255,194,0,0)"/>
+      </radialGradient>
+      <radialGradient id="g2" cx="8%" cy="88%" r="42%">
+        <stop offset="0%" stop-color="rgba(255,194,0,0.12)"/>
+        <stop offset="100%" stop-color="rgba(255,194,0,0)"/>
+      </radialGradient>
+    </defs>
+    <rect width="1440" height="900" fill="url(#grid)"/>
+    <rect width="1440" height="900" fill="url(#g1)"/>
+    <rect width="1440" height="900" fill="url(#g2)"/>
+    <line x1="-80" y1="700" x2="360" y2="1060" stroke="rgba(255,194,0,0.10)" stroke-width="60"/>
+    <line x1="60"  y1="660" x2="500" y2="1020" stroke="rgba(255,194,0,0.07)" stroke-width="60"/>
+    <polygon class="tri-p"  points="1260,0 1440,0 1440,200" fill="rgba(255,194,0,0.10)"/>
+    <polygon class="tri-p2" points="1390,0 1440,0 1440,85"  fill="rgba(255,194,0,0.09)"/>
+    <circle class="ring-1" cx="1380" cy="80" r="310" fill="none" stroke="rgba(255,194,0,0.14)" stroke-width="1.5" stroke-dasharray="12 8"/>
+    <circle class="ring-2" cx="1380" cy="80" r="210" fill="none" stroke="rgba(255,194,0,0.10)" stroke-width="1"/>
+    <circle           cx="1380" cy="80" r="125" fill="none" stroke="rgba(255,194,0,0.07)" stroke-width="1"/>
+    <circle class="ring-3" cx="60" cy="860" r="230" fill="none" stroke="rgba(255,194,0,0.10)" stroke-width="1.5" stroke-dasharray="10 6"/>
+    <circle cx="60" cy="860" r="135" fill="none" stroke="rgba(255,194,0,0.07)" stroke-width="1"/>
+    <rect class="scan" x="0" y="0" width="1440" height="2" fill="rgba(255,194,0,0.3)"/>
+    <line x1="860" y1="0" x2="1440" y2="0"   stroke="rgba(255,194,0,0.35)" stroke-width="1"/>
+    <line x1="1440" y1="0" x2="1440" y2="300" stroke="rgba(255,194,0,0.35)" stroke-width="1"/>
+    <circle class="dot-b1" cx="1110" cy="490" r="3.5" fill="rgba(255,194,0,0.75)"/>
+    <circle class="dot-b2" cx="1136" cy="490" r="3.5" fill="rgba(255,194,0,0.55)"/>
+    <circle class="dot-b3" cx="1162" cy="490" r="3.5" fill="rgba(255,194,0,0.35)"/>
+    <circle class="dot-b4" cx="1110" cy="516" r="3.5" fill="rgba(255,194,0,0.55)"/>
+    <circle class="dot-b5" cx="1136" cy="516" r="3.5" fill="rgba(255,194,0,0.35)"/>
+    <circle cx="1110" cy="542" r="3.5" fill="rgba(255,194,0,0.20)"/>
+  </svg>
+</div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <img src="Imagenes/MADISA-logo-vector1.png" alt="MADISA CAT">
+    <div class="topbar-divider"></div>
+    <span class="topbar-title">Área de Compras</span>
+  </div>
+  <div class="topbar-right">
+    <div class="user-chip">
+      <div class="user-avatar" id="avatarInitials">C</div>
+      <span class="user-name" id="userName">Comprador</span>
+    </div>
+    <button class="btn-theme" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="btn-salir" onclick="salir()">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Salir
+    </button>
+  </div>
+</header>
+
+<main class="main">
+  <div class="welcome">
+    <div class="welcome-label">Bienvenido</div>
+    <div class="welcome-title">Herramientas de <span>Compras</span></div>
+    <div class="welcome-sub">Selecciona una herramienta para comenzar</div>
+  </div>
+
+  <!-- HERRAMIENTAS -->
+  <div class="section-label"><span>Herramientas</span></div>
+  <div class="app-grid">
+    <a class="app-tile" href="precios.html">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg></div>
+      <div class="tile-name">Análisis de Precios</div>
+    </a>
+    <a class="app-tile" href="Precios.html">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg></div>
+      <div class="tile-name">Precios & Bloqueos</div>
+    </a>
+    <a class="app-tile" href="Equivalencias.html">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+      <div class="tile-name">Equivalencias SOS</div>
+    </a>
+    <a class="app-tile" href="Directorio.html">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <div class="tile-name">Directorio Compradores</div>
+    </a>
+    <a class="app-tile" href="Fracciones.html">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6M3 15h6M15 3v18M15 9h6M15 15h6"/></svg></div>
+      <div class="tile-name">Fracciones Arancelarias</div>
+    </a>
+    <a class="app-tile" href="Entrega.html">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg></div>
+      <div class="tile-name">Tiempo de Entrega CAT</div>
+    </a>
+    <a class="app-tile" href="Margen.html">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg></div>
+      <div class="tile-name">Calculadora de Márgenes</div>
+    </a>
+  </div>
+
+  <!-- PORTALES -->
+  <div class="section-label delay2"><span>Portales</span></div>
+  <div class="app-grid">
+    <a class="app-tile portal-tile" href="MTS/Inicio.html" target="_blank">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+      <div class="tile-name">MTS</div>
+    </a>
+    <a class="app-tile portal-tile" href="https://madisa-prod.operations.dynamics.com/?cmp=mdi&mi=DefaultDashboard&lng=en-us" target="_blank">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div class="tile-name">NAXT</div>
+    </a>
+    <a class="app-tile portal-tile" href="https://app.powerbi.com/groups/me/apps/86a5951a-3c6e-42c9-b6fd-e161e2b5ff80/reports/d07062d0-da57-4ecc-83ee-87cec3ce0105/742faa910186f61acb16?ctid=e1f30a39-f909-45fb-95e3-a9efc0b93658&experience=power-bi" target="_blank">
+      <div class="tile-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+      <div class="tile-name">SILO</div>
+    </a>
+  </div>
+</main>
+
+<footer>© 2026 — MADISA Portal de Compras</footer>
+
+<script>
+// ── PARTICLES ──
+(function() {
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
+  function rand(a,b) { return Math.random()*(b-a)+a; }
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = rand(0,W); this.y = rand(0,H); this.r = rand(1,2.5);
+      this.vx = rand(-0.18,0.18); this.vy = rand(-0.35,-0.1);
+      this.a = rand(0.2,0.65); this.da = rand(0.004,0.008)*(Math.random()>0.5?1:-1);
+    }
+    update() {
+      this.x+=this.vx; this.y+=this.vy; this.a+=this.da;
+      if(this.a<=0||this.a>=0.7) this.da*=-1;
+      if(this.y<-10||this.x<-10||this.x>W+10) this.reset();
+    }
+    draw() {
+      const c = window._particleColor || '255,194,0';
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${c},${this.a})`; ctx.fill();
+    }
+  }
+  for(let i=0;i<100;i++) particles.push(new Particle());
+  function drawLines() {
+    const c = window._particleColor || '255,194,0';
+    for(let i=0;i<particles.length;i++) for(let j=i+1;j<particles.length;j++) {
+      const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<150) {
+        ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.strokeStyle=`rgba(${c},${0.16*(1-d/150)})`; ctx.lineWidth=0.7; ctx.stroke();
+      }
+    }
+  }
+  function animate() { ctx.clearRect(0,0,W,H); drawLines(); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animate); }
+  animate();
+})();
+
+// ── SESIÓN ──
+if (localStorage.getItem('madisa_rol') !== 'comprador') window.location.replace('index.html');
+const user = localStorage.getItem('madisa_user') || 'Comprador';
+document.getElementById('userName').textContent = user;
+const ini = user.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'C';
+document.getElementById('avatarInitials').textContent = ini;
+
+function salir() {
+  localStorage.removeItem('madisa_rol'); localStorage.removeItem('madisa_user');
+  window.location.href = 'index.html';
+}
+
+// ── TEMA ──
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeIcon').innerHTML = isLight
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  localStorage.setItem('mts_theme', isLight ? 'light' : 'dark');
+}
+if (localStorage.getItem('mts_theme') === 'light') toggleTheme();
+
+// Tiles escalonados
+document.querySelectorAll('.app-tile').forEach((t,i) => { t.style.animationDelay=(0.5+i*0.07)+'s'; });
+
+// ── 🌸 EASTER EGG: KONAMI CODE ──
+(function() {
+  const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let idx = 0;
+  const toast = document.createElement('div');
+  toast.className = 'easter-toast';
+  document.body.appendChild(toast);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === KONAMI[idx]) {
+      idx++;
+      if (idx === KONAMI.length) {
+        idx = 0;
+        const isPink = document.body.classList.toggle('pink');
+        if (isPink) document.body.classList.remove('light');
+        // Cambiar color de partículas
+        window._particleColor = isPink ? '255,105,180' : '255,194,0';
+        toast.textContent = isPink ? '🌸 Modo Rosa Activado!' : '🌸 Modo Rosa Desactivado';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+        localStorage.setItem('mts_theme', isPink ? 'pink' : 'dark');
+        if (!isPink) {
+          document.getElementById('themeIcon').innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+        }
+      }
+    } else {
+      idx = e.key === KONAMI[0] ? 1 : 0;
+    }
+  });
+
+  // Restaurar si estaba guardado
+  if (localStorage.getItem('mts_theme') === 'pink') {
+    document.body.classList.add('pink');
+    window._particleColor = '255,105,180';
+  }
+})();
+</script>
+</body>
+</html>

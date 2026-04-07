@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTS — Cargas Masivas</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --yellow:   #FFC200;
+  --yellow-d: #E0AA00;
+  --yellow-lt:#FFD04D;
+  --black:    #111111;
+  --black-2:  #181818;
+  --black-3:  #222222;
+  --black-4:  #2C2C2C;
+  --white:    #FFFFFF;
+  --gray:     #888888;
+  --gray-lt:  #BBBBBB;
+  --border:   #2A2A2A;
+  --green:    #2ECC71;
+  --red:      #E74C3C;
+}
+html, body { min-height: 100vh; font-family: 'Barlow', sans-serif; background: var(--black); color: var(--white); overflow-x: hidden; }
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 56px; background: var(--black-2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; position: sticky; top: 0; z-index: 100;
+  animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes slideDown { from { opacity:0; transform:translateY(-100%); } to { opacity:1; transform:translateY(0); } }
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-left img { height: 32px; }
+.topbar-divider { width: 1px; height: 26px; background: #333; }
+.nav-links { display: flex; gap: 4px; }
+.nav-link {
+  padding: 6px 14px; border-radius: 5px;
+  font-size: 0.82rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--gray); text-decoration: none;
+  transition: color 0.15s, background 0.15s; cursor: pointer; border: none; background: none;
+}
+.nav-link:hover { color: var(--yellow-lt); background: rgba(255,194,0,0.06); }
+.nav-link.active { color: var(--yellow); background: rgba(255,194,0,0.1); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn-theme {
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--black-3); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s; flex-shrink: 0;
+}
+.btn-theme:hover { border-color: var(--yellow); background: rgba(255,194,0,0.08); }
+.btn-theme svg { width: 16px; height: 16px; stroke: var(--gray); fill: none; stroke-width: 2; transition: stroke 0.15s; }
+.btn-theme:hover svg { stroke: var(--yellow); }
+.btn-back {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid #333; border-radius: 5px;
+  padding: 6px 12px; color: var(--gray); font-size: 0.78rem;
+  font-family: 'Barlow', sans-serif; font-weight: 600;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+  transition: border-color 0.15s, color 0.15s; text-decoration: none;
+}
+.btn-back:hover { border-color: var(--yellow); color: var(--yellow); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── PAGE HEADER ── */
+.page-header { padding: 2rem 2rem 0; animation: fadeUp 0.5s 0.2s cubic-bezier(0.22,1,0.36,1) both; }
+.page-header h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.9rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.02em; color: var(--white);
+}
+.page-header h1 span { color: var(--yellow); }
+.page-header p { font-size: 0.85rem; color: var(--gray); margin-top: 3px; }
+
+/* ── MAIN ── */
+.main { max-width: 900px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+
+/* ── STEP FLOW ── */
+.steps-flow {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border);
+  border-radius: 10px; overflow: hidden;
+  margin-bottom: 1.5rem;
+  animation: fadeUp 0.5s 0.3s cubic-bezier(0.22,1,0.36,1) both;
+}
+.step-item {
+  background: var(--black-2);
+  padding: 14px 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--black-4); border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem; font-weight: 800; color: var(--gray);
+  flex-shrink: 0;
+}
+.step-item.current .step-num { background: var(--yellow); border-color: var(--yellow); color: var(--black); }
+.step-item.done .step-num { background: rgba(46,204,113,0.15); border-color: var(--green); color: var(--green); }
+.step-text { font-size: 0.78rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.06em; }
+.step-item.current .step-text { color: var(--yellow-lt); }
+.step-item.done .step-text { color: var(--green); }
+
+/* ── CARD ── */
+.card {
+  background: var(--black-2);
+  border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  margin-bottom: 1.25rem;
+  animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+.card-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.card-header svg { width: 15px; height: 15px; stroke: var(--yellow); fill: none; stroke-width: 2; flex-shrink: 0; }
+.card-header span {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-lt);
+}
+.card-body { padding: 18px; }
+
+/* ── TIPO ARCHIVO ── */
+.tipo-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.tipo-option {
+  background: var(--black-3); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.tipo-option:hover { border-color: #444; background: var(--black-4); }
+.tipo-option.selected { border-color: var(--yellow); background: rgba(255,194,0,0.07); }
+.tipo-option input[type="radio"] { display: none; }
+.radio-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--black);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: border-color 0.15s;
+}
+.tipo-option.selected .radio-dot { border-color: var(--yellow); }
+.radio-dot::after {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--yellow); opacity: 0; transition: opacity 0.15s;
+}
+.tipo-option.selected .radio-dot::after { opacity: 1; }
+.tipo-label {
+  font-size: 0.82rem; font-weight: 600; color: var(--gray-lt);
+  line-height: 1.25;
+}
+.tipo-option.selected .tipo-label { color: var(--yellow-lt); }
+
+/* Hint text */
+.hint-text {
+  font-size: 0.78rem; color: var(--gray);
+  background: var(--black-3); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 8px; margin-top: 14px;
+}
+.hint-text svg { width: 14px; height: 14px; stroke: var(--yellow); fill: none; stroke-width: 2; flex-shrink: 0; }
+
+/* ── DESCARGA EJEMPLO ── */
+.btn-download {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: none; border: 1.5px solid var(--yellow);
+  border-radius: 7px; padding: 10px 18px;
+  color: var(--yellow); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.9rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.07em; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-download:hover { background: var(--yellow); color: var(--black); }
+.btn-download svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── DROP ZONE ── */
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 10px; padding: 36px 20px;
+  text-align: center; cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  position: relative;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--yellow); background: rgba(255,194,0,0.04);
+}
+.drop-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.drop-icon {
+  width: 48px; height: 48px; margin: 0 auto 12px;
+  background: var(--black-3); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.drop-icon svg { width: 24px; height: 24px; stroke: var(--gray); fill: none; stroke-width: 1.8; }
+.drop-zone:hover .drop-icon svg, .drop-zone.drag-over .drop-icon svg { stroke: var(--yellow); }
+.drop-title { font-size: 0.95rem; font-weight: 700; color: var(--gray-lt); margin-bottom: 4px; }
+.drop-title span { color: var(--yellow); text-decoration: underline; }
+.drop-sub { font-size: 0.78rem; color: var(--gray); }
+
+/* File selected state */
+.file-selected {
+  display: none; align-items: center; gap: 12px;
+  background: var(--black-3); border: 1.5px solid rgba(46,204,113,0.3);
+  border-radius: 8px; padding: 12px 16px; margin-top: 12px;
+}
+.file-selected.visible { display: flex; }
+.file-icon { width: 36px; height: 36px; background: rgba(46,204,113,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.file-icon svg { width: 18px; height: 18px; stroke: var(--green); fill: none; stroke-width: 2; }
+.file-info { flex: 1; min-width: 0; }
+.file-name { font-size: 0.85rem; font-weight: 600; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-size { font-size: 0.74rem; color: var(--gray); margin-top: 1px; }
+.file-remove { background: none; border: none; cursor: pointer; color: var(--gray); padding: 4px; border-radius: 4px; transition: color 0.15s; }
+.file-remove:hover { color: var(--red); }
+.file-remove svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; display: block; }
+
+/* ── UPLOAD BUTTON ── */
+.btn-upload {
+  width: 100%; background: var(--yellow); color: var(--black); border: none;
+  border-radius: 8px; padding: 14px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  cursor: pointer; transition: background 0.15s, transform 0.1s, opacity 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  opacity: 0.4; pointer-events: none;
+}
+.btn-upload.ready { opacity: 1; pointer-events: all; }
+.btn-upload.ready:hover { background: var(--yellow-lt); }
+.btn-upload.ready:active { transform: scale(0.98); }
+.btn-upload.loading { pointer-events: none; color: transparent; }
+.btn-upload.loading::after {
+  content: ''; position: absolute; width: 18px; height: 18px;
+  border: 2.5px solid var(--black); border-top-color: transparent; border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn-upload svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+/* ── RESULT PANEL ── */
+.result-panel {
+  display: none; border-radius: 10px; padding: 16px 18px;
+  display: none; align-items: flex-start; gap: 14px; margin-top: 14px;
+}
+.result-panel.visible { display: flex; }
+.result-panel.success { background: rgba(46,204,113,0.08); border: 1px solid rgba(46,204,113,0.25); }
+.result-panel.error   { background: rgba(231,76,60,0.08);  border: 1px solid rgba(231,76,60,0.25); }
+.result-icon { flex-shrink: 0; margin-top: 1px; }
+.result-icon svg { width: 20px; height: 20px; fill: none; stroke-width: 2.5; }
+.result-panel.success .result-icon svg { stroke: var(--green); }
+.result-panel.error   .result-icon svg { stroke: var(--red); }
+.result-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 3px; }
+.result-panel.success .result-title { color: var(--green); }
+.result-panel.error   .result-title { color: var(--red); }
+.result-msg { font-size: 0.82rem; color: var(--gray-lt); line-height: 1.5; }
+
+/* ── LIGHT THEME ── */
+body.light {
+  --black:   #F5F5F0; --black-2: #FFFFFF; --black-3: #EFEFEB;
+  --black-4: #E0E0DA; --white:   #111111; --gray:    #666666;
+  --gray-lt: #333333; --border:  #DDDDDA;
+}
+body.light .topbar { background: #FFFFFF; }
+body.light .topbar-divider { background: #DDD; }
+body.light .hint-text { background: #EFEFEB; }
+
+/* ── FOOTER ── */
+footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: #333; border-top: 1px solid #1A1A1A; }
+
+@media (max-width: 700px) {
+  .tipo-grid { grid-template-columns: repeat(2,1fr); }
+  .steps-flow { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <img src="../Imagenes/MADISA-logo-vector1.png" alt="MADISA CAT">
+    <div class="topbar-divider"></div>
+    <nav class="nav-links">
+      <a class="nav-link" href="Inicio.html">MTS</a>
+      <a class="nav-link active" href="#">Cargas Masivas</a>
+      <a class="nav-link" href="Seguridad.html">Seguridad</a>
+    </nav>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-theme" id="themeBtn" title="Cambiar tema" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="btn-back" href="../dashboard.html">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Portal
+    </a>
+  </div>
+</header>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>Cargas <span>Masivas</span></h1>
+  <p>Importa archivos para actualizar información en el sistema</p>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- STEPS -->
+  <div class="steps-flow">
+    <div class="step-item current" id="s1">
+      <div class="step-num">1</div>
+      <span class="step-text">Tipo de archivo</span>
+    </div>
+    <div class="step-item" id="s2">
+      <div class="step-num">2</div>
+      <span class="step-text">Seleccionar archivo</span>
+    </div>
+    <div class="step-item" id="s3">
+      <div class="step-num">3</div>
+      <span class="step-text">Cargar</span>
+    </div>
+  </div>
+
+  <!-- TIPO ARCHIVO -->
+  <div class="card" style="animation-delay:0.35s">
+    <div class="card-header">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Tipo de archivo</span>
+    </div>
+    <div class="card-body">
+      <div class="tipo-grid" id="tipoGrid">
+        <label class="tipo-option selected" onclick="selectTipo(this, 'imp-cat')">
+          <input type="radio" name="tipo" value="imp-cat" checked>
+          <div class="radio-dot"></div>
+          <span class="tipo-label">Importación — CAT</span>
+        </label>
+        <label class="tipo-option" onclick="selectTipo(this, 'imp-rts')">
+          <input type="radio" name="tipo" value="imp-rts">
+          <div class="radio-dot"></div>
+          <span class="tipo-label">Importación — RTS</span>
+        </label>
+        <label class="tipo-option" onclick="selectTipo(this, 'traf-nocat')">
+          <input type="radio" name="tipo" value="traf-nocat">
+          <div class="radio-dot"></div>
+          <span class="tipo-label">Tráfico — No Cat</span>
+        </label>
+        <label class="tipo-option" onclick="selectTipo(this, 'traf-cat')">
+          <input type="radio" name="tipo" value="traf-cat">
+          <div class="radio-dot"></div>
+          <span class="tipo-label">Tráfico — CAT</span>
+        </label>
+        <label class="tipo-option" onclick="selectTipo(this, 'traf-nac')">
+          <input type="radio" name="tipo" value="traf-nac">
+          <div class="radio-dot"></div>
+          <span class="tipo-label">Tráfico — Nacionales</span>
+        </label>
+        <label class="tipo-option" onclick="selectTipo(this, 'traf-lev')">
+          <input type="radio" name="tipo" value="traf-lev">
+          <div class="radio-dot"></div>
+          <span class="tipo-label">Tráfico e Importación — Levisa</span>
+        </label>
+        <label class="tipo-option" onclick="selectTipo(this, 'fact-mts')">
+          <input type="radio" name="tipo" value="fact-mts">
+          <div class="radio-dot"></div>
+          <span class="tipo-label">Facturas MTS</span>
+        </label>
+        <label class="tipo-option" onclick="selectTipo(this, 'alertas-cat')">
+          <input type="radio" name="tipo" value="alertas-cat">
+          <div class="radio-dot"></div>
+          <span class="tipo-label">Alertas CAT</span>
+        </label>
+        <label class="tipo-option" onclick="selectTipo(this, 'usuarios-mts')">
+          <input type="radio" name="tipo" value="usuarios-mts">
+          <div class="radio-dot"></div>
+          <span class="tipo-label">Usuarios MTS</span>
+        </label>
+      </div>
+
+      <div class="hint-text" id="hintText">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/></svg>
+        <span id="hintMsg">Renglones 1–8 Encabezados, a partir de línea 9: Factura | Code</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHIVO + ACCIONES -->
+  <div class="card" style="animation-delay:0.45s">
+    <div class="card-header">
+      <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      <span>Seleccionar y cargar archivo</span>
+      <div style="margin-left:auto">
+        <button class="btn-download" onclick="descargarEjemplo()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar ejemplo
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <!-- DROP ZONE -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="onFileChange(event)">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+        </div>
+        <div class="drop-title">Arrastra tu archivo aquí o <span>haz clic para buscar</span></div>
+        <div class="drop-sub">Formatos aceptados: .xlsx, .xls, .csv</div>
+      </div>
+
+      <!-- FILE SELECTED -->
+      <div class="file-selected" id="fileSelected">
+        <div class="file-icon">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="file-info">
+          <div class="file-name" id="fileName">archivo.xlsx</div>
+          <div class="file-size" id="fileSize">0 KB</div>
+        </div>
+        <button class="file-remove" onclick="removeFile()" title="Quitar archivo">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- RESULT -->
+      <div class="result-panel" id="resultPanel">
+        <div class="result-icon">
+          <svg id="resultIcon" viewBox="0 0 24 24"></svg>
+        </div>
+        <div>
+          <div class="result-title" id="resultTitle"></div>
+          <div class="result-msg" id="resultMsg"></div>
+        </div>
+      </div>
+
+      <!-- BUTTON -->
+      <div style="margin-top:16px">
+        <button class="btn-upload" id="uploadBtn" onclick="cargarArchivo()">
+          <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Cargar archivo
+        </button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>© 2026 — MADISA MTS Cargas Masivas</footer>
+
+<script>
+// ── HINTS por tipo ──
+const hints = {
+  'imp-cat':      'Renglones 1–8 Encabezados, a partir de línea 9: Factura | Code',
+  'imp-rts':      'Renglones 1–5 Encabezados, a partir de línea 6: OC | Parte | Cantidad',
+  'traf-nocat':   'Columnas requeridas: OV | OC | Parte | Estatus | Guía | Transportista',
+  'traf-cat':     'Columnas requeridas: OV | OC | Parte | Estatus | Guía | Transportista',
+  'traf-nac':     'Columnas requeridas: OV | OC | Parte | Fecha Entrega | Transportista',
+  'traf-lev':     'Columnas requeridas: OV | OC | Parte | FAC | Factura | Guía',
+  'fact-mts':     'Columnas requeridas: Factura | Fecha | Monto | OC relacionada',
+  'alertas-cat':  'Columnas requeridas: Código Alerta | Descripción | Fecha | Prioridad',
+  'usuarios-mts': 'Columnas requeridas: Usuario | Nombre | Rol | Sucursal | Activo',
+};
+
+let selectedFile = null;
+let currentTipo = 'imp-cat';
+
+function selectTipo(el, val) {
+  document.querySelectorAll('.tipo-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input').checked = true;
+  currentTipo = val;
+  document.getElementById('hintMsg').textContent = hints[val] || '';
+  updateStep();
+}
+
+function onFileChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  setFile(file);
+}
+
+function setFile(file) {
+  selectedFile = file;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('fileSelected').classList.add('visible');
+  document.getElementById('uploadBtn').classList.add('ready');
+  hideResult();
+  updateStep();
+}
+
+function removeFile() {
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileSelected').classList.remove('visible');
+  document.getElementById('uploadBtn').classList.remove('ready');
+  hideResult();
+  updateStep();
+}
+
+function updateStep() {
+  const s2 = document.getElementById('s2');
+  const s3 = document.getElementById('s3');
+  if (selectedFile) {
+    s2.className = 'step-item done';
+    s2.querySelector('.step-num').textContent = '✓';
+    s3.className = 'step-item current';
+  } else {
+    s2.className = 'step-item current';
+    s2.querySelector('.step-num').textContent = '2';
+    s3.className = 'step-item';
+    s3.querySelector('.step-num').textContent = '3';
+  }
+}
+
+function hideResult() {
+  const p = document.getElementById('resultPanel');
+  p.classList.remove('visible','success','error');
+}
+
+function cargarArchivo() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('uploadBtn');
+  btn.classList.add('loading');
+  hideResult();
+
+  // Simula llamada al servidor
+  setTimeout(() => {
+    btn.classList.remove('loading');
+    const ok = Math.random() > 0.3; // demo: 70% éxito
+    showResult(ok);
+    if (ok) {
+      document.getElementById('s3').className = 'step-item done';
+      document.getElementById('s3').querySelector('.step-num').textContent = '✓';
+    }
+  }, 1800);
+}
+
+function showResult(ok) {
+  const panel = document.getElementById('resultPanel');
+  const icon  = document.getElementById('resultIcon');
+  const title = document.getElementById('resultTitle');
+  const msg   = document.getElementById('resultMsg');
+
+  panel.classList.add('visible', ok ? 'success' : 'error');
+  icon.innerHTML = ok
+    ? '<polyline points="20 6 9 17 4 12"/>'
+    : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>';
+  title.textContent = ok ? 'Archivo cargado correctamente' : 'Error al cargar el archivo';
+  msg.textContent = ok
+    ? `Se procesaron los registros de "${selectedFile.name}" exitosamente.`
+    : 'El archivo no tiene el formato correcto o contiene datos inválidos. Verifica la estructura e intenta de nuevo.';
+}
+
+function descargarEjemplo() {
+  alert(`Descargando ejemplo para: ${currentTipo.replace('-',' ').toUpperCase()}`);
+}
+
+// ── DRAG & DROP ──
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) setFile(file);
+});
+
+// ── TEMA ──
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  const icon = document.getElementById('themeIcon');
+  icon.innerHTML = isLight
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  localStorage.setItem('mts_theme', isLight ? 'light' : 'dark');
+}
+if (localStorage.getItem('mts_theme') === 'light') toggleTheme();
+</script>
+</body>
+</html>

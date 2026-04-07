@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MADISA — Generador de Memos</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --yellow:#FFC200; --yellow-lt:#FFD04D;
+  --black:#111111; --black-2:#181818; --black-3:#222222; --black-4:#2C2C2C;
+  --white:#FFFFFF; --gray:#888888; --gray-lt:#BBBBBB; --border:#2A2A2A;
+  --green:#2ECC71; --red:#E74C3C; --blue:#3498DB; --orange:#E67E22;
+}
+html,body { min-height:100vh; font-family:'Barlow',sans-serif; background:var(--black); color:var(--white); overflow-x:hidden; }
+@keyframes slideDown{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulseGlow{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes scanH{from{transform:translateY(-100%)}to{transform:translateY(100vh)}}
+@keyframes rotateSlow{to{transform:rotate(360deg)}}
+@keyframes rotateSlowR{to{transform:rotate(-360deg)}}
+
+/* BG */
+.bg-deco{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-deco canvas{position:absolute;inset:0;width:100%;height:100%}
+.bg-svg{position:absolute;inset:0;width:100%;height:100%}
+.ring-1{transform-origin:1380px 80px;animation:rotateSlow 32s linear infinite}
+.ring-2{transform-origin:1380px 80px;animation:rotateSlowR 20s linear infinite}
+.scan{animation:scanH 7s 1s linear infinite;opacity:.2}
+.tri-p{animation:pulseGlow 4s ease-in-out infinite}
+
+/* TOPBAR */
+.topbar{height:56px;background:rgba(17,17,17,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,194,0,.1);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:100;animation:slideDown .5s cubic-bezier(.22,1,.36,1) both}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-left img{height:32px}
+.topbar-divider{width:1px;height:26px;background:#333}
+.topbar-title{font-family:"Barlow Condensed",sans-serif;font-size:.9rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-lt)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn-theme{width:34px;height:34px;border-radius:7px;border:1px solid var(--border);background:rgba(34,34,34,.8);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,background .15s}
+.btn-theme:hover{border-color:var(--yellow);background:rgba(255,194,0,.08)}
+.btn-theme svg{width:15px;height:15px;stroke:var(--gray);fill:none;stroke-width:2}
+.btn-theme:hover svg{stroke:var(--yellow)}
+.btn-back{display:flex;align-items:center;gap:6px;background:none;border:1px solid #333;border-radius:5px;padding:6px 12px;color:var(--gray);font-size:.78rem;font-family:"Barlow",sans-serif;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:border-color .15s,color .15s;text-decoration:none}
+.btn-back:hover{border-color:var(--yellow);color:var(--yellow)}
+.btn-back svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5}
+
+.page-header{padding:1.5rem 1.5rem 0;position:relative;z-index:1;animation:fadeUp .5s .2s cubic-bezier(.22,1,.36,1) both;opacity:0}
+.page-header h1{font-family:"Barlow Condensed",sans-serif;font-size:1.9rem;font-weight:800;text-transform:uppercase}
+.page-header h1 span{color:var(--yellow)}
+.page-header p{font-size:.85rem;color:var(--gray);margin-top:3px}
+
+.main{max-width:1200px;margin:0 auto;padding:1.25rem 1.5rem 3rem;position:relative;z-index:1}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:380px 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+/* CARD */
+.card{background:var(--black-2);border:1px solid var(--border);border-radius:14px;overflow:hidden;animation:fadeUp .5s .3s cubic-bezier(.22,1,.36,1) both;opacity:0}
+.card.d2{animation-delay:.4s}
+.card-head{background:var(--yellow);padding:10px 18px;display:flex;align-items:center;gap:8px}
+.card-head.blue{background:var(--blue)}
+.card-head.green{background:var(--green)}
+.card-head svg{width:15px;height:15px;stroke:var(--black);fill:none;stroke-width:2.5}
+.card-head span{font-family:"Barlow Condensed",sans-serif;font-size:.85rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--black)}
+.card-head .head-actions{margin-left:auto;display:flex;gap:6px}
+.card-body{padding:18px}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed #333;border-radius:10px;padding:2rem 1rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;overflow:hidden}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--yellow);background:rgba(255,194,0,.04)}
+.upload-zone svg{width:40px;height:40px;stroke:#444;fill:none;stroke-width:1.5;display:block;margin:0 auto 10px}
+.upload-zone p{font-size:.85rem;color:var(--gray)}
+.upload-zone span{color:var(--yellow);font-weight:600}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+/* Preview imagen */
+.img-preview{position:relative;border-radius:8px;overflow:hidden;margin-top:10px;display:none}
+.img-preview img{width:100%;max-height:280px;object-fit:contain;background:#1A1A1A;border-radius:8px}
+.img-preview .img-del{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(231,76,60,.9);border:none;color:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* BTN AI */
+.btn-ai{width:100%;background:linear-gradient(135deg,#1A1A2E,#16213E);border:1.5px solid var(--blue);border-radius:9px;padding:12px;color:var(--blue);font-family:"Barlow Condensed",sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;transition:all .2s}
+.btn-ai:hover{background:rgba(52,152,219,.12);border-color:#5DADE2;color:#5DADE2}
+.btn-ai:disabled{opacity:.5;cursor:not-allowed}
+.btn-ai svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.btn-ai .spinner{width:16px;height:16px;border:2px solid rgba(52,152,219,.3);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+
+/* AI STATUS */
+.ai-status{margin-top:10px;font-size:.78rem;text-align:center;padding:8px;border-radius:7px;display:none}
+.ai-status.loading{display:block;background:rgba(52,152,219,.08);color:var(--blue);border:1px solid rgba(52,152,219,.2)}
+.ai-status.success{display:block;background:rgba(46,204,113,.08);color:var(--green);border:1px solid rgba(46,204,113,.2)}
+.ai-status.error{display:block;background:rgba(231,76,60,.08);color:var(--red);border:1px solid rgba(231,76,60,.2)}
+
+/* FORM */
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:5px}
+.inp,.sel{width:100%;background:var(--black-3);border:1.5px solid #333;border-radius:7px;padding:9px 12px;font-family:'Barlow',sans-serif;font-size:.87rem;color:var(--white);outline:none;transition:border-color .15s}
+.inp:focus,.sel:focus{border-color:var(--yellow)}
+.sel option{background:var(--black-3)}
+.inp::placeholder{color:#444}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* TABLE */
+.memo-table-wrap{overflow-x:auto;margin-bottom:12px;scrollbar-width:thin;scrollbar-color:var(--yellow) var(--black-3)}
+.memo-table-wrap::-webkit-scrollbar{height:4px}
+.memo-table-wrap::-webkit-scrollbar-thumb{background:var(--yellow);border-radius:4px}
+table.memo{width:100%;border-collapse:collapse;font-size:.8rem;min-width:700px}
+table.memo th{background:var(--black-3);padding:8px 10px;text-align:left;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);border-bottom:1px solid var(--border);white-space:nowrap}
+table.memo td{padding:4px 5px;border-bottom:1px solid #1C1C1C}
+table.memo .td-inp{width:100%;background:var(--black-4);border:1px solid transparent;border-radius:5px;padding:6px 8px;font-family:'Barlow',sans-serif;font-size:.82rem;color:var(--white);outline:none;min-width:60px}
+table.memo .td-inp:focus{border-color:var(--yellow);background:var(--black-3)}
+table.memo .td-del{background:none;border:none;color:#333;cursor:pointer;padding:4px 7px;font-size:.9rem;transition:color .15s;border-radius:4px}
+table.memo .td-del:hover{color:var(--red);background:rgba(231,76,60,.08)}
+.btn-add-row{background:none;border:1px dashed #333;border-radius:6px;padding:7px 14px;color:var(--gray);font-size:.78rem;font-family:'Barlow',sans-serif;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:border-color .15s,color .15s}
+.btn-add-row:hover{border-color:var(--yellow);color:var(--yellow)}
+.btn-add-row svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5}
+
+/* ACTIONS */
+.action-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.btn-primary{display:flex;align-items:center;gap:7px;background:var(--yellow);color:var(--black);border:none;border-radius:8px;padding:11px 20px;font-family:"Barlow Condensed",sans-serif;font-size:.95rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;transition:background .15s}
+.btn-primary:hover{background:var(--yellow-lt)}
+.btn-primary svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5}
+.btn-ghost2{display:flex;align-items:center;gap:7px;background:none;color:var(--gray-lt);border:1.5px solid #333;border-radius:8px;padding:11px 18px;font-family:"Barlow Condensed",sans-serif;font-size:.95rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;transition:border-color .15s,color .15s}
+.btn-ghost2:hover{border-color:var(--yellow);color:var(--yellow)}
+.btn-ghost2 svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5}
+
+/* PREVIEW MEMO */
+.memo-preview{background:#FFFFFF;color:#000;border-radius:10px;padding:28px 32px;font-family:'Barlow',sans-serif;font-size:.82rem;line-height:1.6;display:none}
+.mp-header{margin-bottom:16px}
+.mp-company{font-size:.75rem;color:#555;margin-bottom:8px}
+.mp-title{font-size:1rem;font-weight:800;text-transform:uppercase;text-align:right;letter-spacing:.08em;color:#111;margin-bottom:14px}
+.mp-meta{display:grid;grid-template-columns:auto 1fr auto auto;gap:6px 12px;font-size:.8rem;margin-bottom:14px}
+.mp-meta .lbl{font-weight:700;color:#333}
+.mp-meta .val{color:#111}
+.mp-prov{text-align:right;font-weight:700;color:#111}
+.mp-intro{margin-bottom:14px;font-size:.8rem;color:#333}
+.mp-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:20px}
+.mp-table th{background:#f5f5f5;padding:6px 10px;text-align:left;font-weight:700;text-transform:uppercase;font-size:.68rem;letter-spacing:.06em;color:#555;border:1px solid #DDD}
+.mp-table td{padding:6px 10px;border:1px solid #DDD;color:#111}
+.mp-table tr:nth-child(even) td{background:#FAFAFA}
+.mp-total{text-align:right;font-weight:700;font-size:.85rem;color:#111;margin-bottom:20px}
+.mp-firma{margin-top:24px;border-top:1px solid #DDD;padding-top:12px;font-size:.75rem;color:#555;text-align:left}
+.mp-firma strong{color:#111}
+
+/* Light */
+body.light{--black:#F5F5F0;--black-2:#FFFFFF;--black-3:#EFEFEB;--black-4:#E0E0DA;--white:#111111;--gray:#666666;--gray-lt:#333333;--border:#DDDDDA}
+body.light .topbar{background:rgba(255,255,255,.95);border-bottom-color:#DDD}
+body.light .topbar-divider{background:#DDD}
+body.light .btn-theme{background:#EFEFEB;border-color:#DDD}
+body.light .inp,.body.light .sel{color:#111}
+body.light .memo-preview{background:#F8F8F8}
+
+footer{text-align:center;padding:1.5rem;font-size:.75rem;color:#333;border-top:1px solid #1A1A1A;position:relative;z-index:1}
+@media(max-width:600px){.main{padding:1rem}.topbar{padding:0 1rem}.row2,.row3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="bg-deco">
+  <canvas id="bgCanvas"></canvas>
+  <svg class="bg-svg" viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,194,0,0.07)" stroke-width="0.8"/>
+      </pattern>
+      <radialGradient id="g1" cx="78%" cy="12%" r="52%">
+        <stop offset="0%" stop-color="rgba(255,194,0,0.18)"/><stop offset="100%" stop-color="rgba(255,194,0,0)"/>
+      </radialGradient>
+    </defs>
+    <rect width="1440" height="900" fill="url(#grid)"/><rect width="1440" height="900" fill="url(#g1)"/>
+    <polygon class="tri-p" points="1260,0 1440,0 1440,200" fill="rgba(255,194,0,0.10)"/>
+    <circle class="ring-1" cx="1380" cy="80" r="310" fill="none" stroke="rgba(255,194,0,0.14)" stroke-width="1.5" stroke-dasharray="12 8"/>
+    <circle class="ring-2" cx="1380" cy="80" r="210" fill="none" stroke="rgba(255,194,0,0.10)" stroke-width="1"/>
+    <rect class="scan" x="0" y="0" width="1440" height="2" fill="rgba(255,194,0,0.3)"/>
+    <line x1="860" y1="0" x2="1440" y2="0" stroke="rgba(255,194,0,0.35)" stroke-width="1"/>
+    <line x1="1440" y1="0" x2="1440" y2="300" stroke="rgba(255,194,0,0.35)" stroke-width="1"/>
+  </svg>
+</div>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <img src="../Imagenes/MADISA-logo-vector1.png" alt="MADISA">
+    <div class="topbar-divider"></div>
+    <span class="topbar-title">Generador de Memos</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-theme" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="btn-back" href="../compras.html">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Compras
+    </a>
+  </div>
+</header>
+
+<div class="page-header">
+  <h1>Generador de <span>Memos</span></h1>
+  <p>Sube la factura escaneada y la IA extrae los datos automáticamente</p>
+</div>
+
+<main class="main">
+
+  <!-- FILA 1: Lector IA (ancho completo) -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-head blue">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
+      <span>Lector de Factura IA</span>
+    </div>
+    <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center">
+      <div>
+        <div class="upload-zone" id="uploadZone">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p>Arrastra la factura aquí o <span>haz clic para seleccionar</span></p>
+          <p style="margin-top:6px;font-size:.72rem">JPG, PNG, PDF escaneado</p>
+          <input type="file" id="fileInput" accept="image/*,.pdf" onchange="onFileSelect(event)">
+        </div>
+        <div class="img-preview" id="imgPreview">
+          <img id="previewImg" src="" alt="Factura">
+          <button class="img-del" onclick="clearImage()">✕</button>
+        </div>
+      </div>
+      <div>
+        <button class="btn-ai" id="btnAI" onclick="leerFactura()" disabled>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          Leer factura con IA
+          <span style="background:rgba(52,152,219,.25);color:#5DADE2;font-size:.62rem;padding:2px 7px;border-radius:20px;margin-left:4px;letter-spacing:.06em">DEMO</span>
+        </button>
+        <div class="ai-status" id="aiStatus"></div>
+        <div style="margin-top:14px;padding:12px 14px;background:var(--black-3);border-radius:8px;font-size:.76rem;color:var(--gray);line-height:1.6">
+          <div style="font-weight:700;color:var(--gray-lt);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;font-size:.68rem">¿Cómo funciona?</div>
+          <div>① Sube el PDF o imagen de la factura</div>
+          <div>② La IA extrae los datos automáticamente</div>
+          <div>③ Revisa y edita los campos si es necesario</div>
+          <div>④ Descarga el memo en Excel</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILA 2: Datos del memo + Líneas de facturas -->
+  <div class="layout">
+
+    <!-- Datos del memo -->
+    <div class="card d2">
+      <div class="card-head">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Datos del Memo</span>
+      </div>
+      <div class="card-body">
+        <div class="row2">
+          <div class="fg">
+            <label>Fecha</label>
+            <input class="inp" type="date" id="fFecha">
+          </div>
+          <div class="fg">
+            <label>No. Proveedor</label>
+            <input class="inp" type="text" id="fProveedor" value="P-015886">
+          </div>
+        </div>
+        <div class="fg">
+          <label>De (Comprador)</label>
+          <input class="inp" type="text" id="fDe" placeholder="Nombre; Compras de Refacciones">
+        </div>
+        <div class="fg">
+          <label>Para (Destinatario)</label>
+          <input class="inp" type="text" id="fPara" value="Fabian Leza / Contabilidad">
+        </div>
+        <div class="fg">
+          <label>Nombre del Proveedor</label>
+          <input class="inp" type="text" id="fNombreProv" value="Astec">
+        </div>
+        <div class="fg">
+          <label>Moneda</label>
+          <select class="sel" id="fMoneda">
+            <option value="USD">USD</option>
+            <option value="MXN">MXN</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Líneas de facturas -->
+    <div class="card d2" style="animation-delay:.45s">
+      <div class="card-head green">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span>Líneas de Facturas</span>
+        <div class="head-actions">
+          <button onclick="limpiarTabla()" style="background:none;border:1px solid rgba(0,0,0,.2);border-radius:5px;padding:3px 10px;color:rgba(0,0,0,.5);font-size:.7rem;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:700;text-transform:uppercase">Limpiar</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="memo-table-wrap">
+          <table class="memo" id="memoTable">
+            <thead id="memoHead"></thead>
+            <tbody id="memoBody"></tbody>
+          </table>
+        </div>
+        <button class="btn-add-row" onclick="addRow()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar línea
+        </button>
+
+        <div id="totalSection" style="margin-top:12px">
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:20px;background:var(--black-3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-family:'Barlow Condensed',sans-serif;flex-wrap:wrap">
+            <span style="font-size:.75rem;color:var(--gray);text-transform:uppercase;letter-spacing:.08em">Total Refacciones</span>
+            <span style="font-size:1.1rem;font-weight:800;color:var(--white)" id="totalRef">$0.00</span>
+            <span style="font-size:.75rem;color:var(--gray);text-transform:uppercase;letter-spacing:.08em">Flete</span>
+            <span style="font-size:1.1rem;font-weight:800;color:var(--orange)" id="totalFlete">$0.00</span>
+            <span style="font-size:.75rem;color:var(--gray);text-transform:uppercase;letter-spacing:.08em">Total Factura</span>
+            <span style="font-size:1.3rem;font-weight:800;color:var(--yellow)" id="totalFactura">$0.00</span>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-primary" onclick="previewMemo()">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Vista previa
+          </button>
+          <button class="btn-primary" id="btnExcel" onclick="exportarExcel()">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Descargar Excel
+          </button>
+          <button class="btn-ghost2" onclick="limpiarTodo()">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Nuevo memo
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<!-- PREVIEW -->
+<div id="previewSection" style="margin-top:20px;display:none">
+  <div class="card" style="animation:none">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>Vista Previa del Memo</span>
+      <div class="head-actions">
+        <button onclick="document.getElementById('previewSection').style.display='none'" style="background:none;border:1px solid rgba(0,0,0,.2);border-radius:5px;padding:3px 10px;color:rgba(0,0,0,.5);font-size:.7rem;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:700;text-transform:uppercase">Cerrar</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="memo-preview" id="memoPreview"></div>
+    </div>
+  </div>
+</div>
+</main>
+<footer>© 2026 — MADISA Portal de Compras</footer>
+
+<script>
+// ── PARTICLES ──
+(function(){
+  const canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d');
+  let W,H,particles=[];
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+  window.addEventListener('resize',resize);resize();
+  function rand(a,b){return Math.random()*(b-a)+a;}
+  class Particle{
+    constructor(){this.reset();}
+    reset(){this.x=rand(0,W);this.y=rand(0,H);this.r=rand(1,2.5);this.vx=rand(-.18,.18);this.vy=rand(-.35,-.1);this.a=rand(.2,.65);this.da=rand(.004,.008)*(Math.random()>.5?1:-1);}
+    update(){this.x+=this.vx;this.y+=this.vy;this.a+=this.da;if(this.a<=0||this.a>=.7)this.da*=-1;if(this.y<-10||this.x<-10||this.x>W+10)this.reset();}
+    draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,194,0,${this.a})`;ctx.fill();}
+  }
+  for(let i=0;i<80;i++)particles.push(new Particle());
+  function lines(){for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<130){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(255,194,0,${.12*(1-d/130)})`;ctx.lineWidth=.6;ctx.stroke();}}}
+  function animate(){ctx.clearRect(0,0,W,H);lines();particles.forEach(p=>{p.update();p.draw();});requestAnimationFrame(animate);}
+  animate();
+})();
+
+// ── TABLA CONFIG ──
+const COLS    = ['oc','factura','sucursal','fecha','totalFactura','totalRef','flete','proveedor','sos','linea'];
+const LABELS  = ['OC','Factura','Sucursal','Fecha','Total Factura','Total Ref.','Flete','# Proveedor','SOS','Línea'];
+const PH      = ['90PO000405','15412','90','20/03/2026','916.78','912.78','4','P-015886','591','AS1'];
+
+let tipoActual = 'detalle';
+let imageBase64 = null;
+let rows = [];
+
+// ── INIT ──
+function init(){
+  document.getElementById('fFecha').value = new Date().toISOString().split('T')[0];
+  renderHeader();
+  addRow();
+  document.getElementById('totalSection').style.display = '';
+}
+
+function cambiarTipo(){ /* no-op, always detalle */ }
+
+function renderHeader(){
+  document.getElementById('memoHead').innerHTML =
+    `<tr>${LABELS.map(c=>`<th>${c}</th>`).join('')}<th style="width:36px"></th></tr>`;
+}
+
+function addRow(data={}){
+  const id = Date.now() + Math.random();
+  // Pre-fill proveedor from header
+  if(!data.proveedor) data.proveedor = document.getElementById('fProveedor').value || 'P-015886';
+  if(!data.sos)       data.sos       = '591';
+  rows.push({id, ...data});
+  renderRows();
+}
+
+function removeRow(id){
+  rows = rows.filter(r => r.id !== id);
+  renderRows();
+}
+
+function renderRows(){
+  const tbody = document.getElementById('memoBody');
+  tbody.innerHTML = rows.map(row => `
+    <tr>
+      ${COLS.map((c,i) => `
+        <td><input class="td-inp" data-id="${row.id}" data-col="${c}"
+          value="${row[c]||''}" placeholder="${PH[i]||''}"
+          oninput="updateRow(this)" style="${c==='linea'?'min-width:80px':''}"></td>
+      `).join('')}
+      <td><button class="td-del" onclick="removeRow(${row.id})">✕</button></td>
+    </tr>`).join('');
+  calcTotales();
+}
+
+function updateRow(el){
+  const id  = parseFloat(el.dataset.id);
+  const col = el.dataset.col;
+  const row = rows.find(r => r.id === id);
+  if(row) row[col] = el.value;
+  calcTotales();
+}
+
+function calcTotales(){
+  if(tipoActual !== 'detalle') return;
+  const sumRef  = rows.reduce((a,r) => a + (parseFloat(r.totalRef)||0), 0);
+  const sumFl   = rows.reduce((a,r) => a + (parseFloat(r.flete)||0), 0);
+  const sumFact = rows.reduce((a,r) => a + (parseFloat(r.totalFactura)||0), 0);
+  const fmt = n => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  document.getElementById('totalRef').textContent    = fmt(sumRef);
+  document.getElementById('totalFlete').textContent  = fmt(sumFl);
+  document.getElementById('totalFactura').textContent= fmt(sumFact);
+}
+
+function limpiarTabla(){ rows = []; renderRows(); }
+
+function limpiarTodo(){
+  rows = [];
+  imageBase64 = null;
+  document.getElementById('previewImg').src = '';
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('btnAI').disabled = true;
+  document.getElementById('aiStatus').style.display = 'none';
+  document.getElementById('previewSection').style.display = 'none';
+  document.getElementById('fFecha').value = new Date().toISOString().split('T')[0];
+  ['fDe'].forEach(id => document.getElementById(id).value = '');
+  addRow();
+}
+
+// ── UPLOAD ──
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); });
+
+function onFileSelect(e){ if(e.target.files[0]) processFile(e.target.files[0]); }
+
+function processFile(file){
+  const isPDF = file.type === 'application/pdf';
+  const reader = new FileReader();
+  reader.onload = e => {
+    imageBase64 = e.target.result;
+    // For PDFs, show a placeholder instead of broken img tag
+    const preview = document.getElementById('imgPreview');
+    const img = document.getElementById('previewImg');
+    if(isPDF){
+      preview.innerHTML = `
+        <div style="background:var(--black-3);border-radius:8px;padding:20px;display:flex;align-items:center;gap:14px;margin-top:10px">
+          <svg viewBox="0 0 24 24" style="width:36px;height:36px;stroke:var(--red);fill:none;stroke-width:1.5;flex-shrink:0">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <div>
+            <div style="font-size:.85rem;font-weight:700;color:var(--white)">${file.name}</div>
+            <div style="font-size:.75rem;color:var(--gray);margin-top:2px">PDF listo para leer con IA</div>
+          </div>
+          <button class="img-del" onclick="clearImage()" style="position:relative;top:auto;right:auto;margin-left:auto">✕</button>
+        </div>`;
+    } else {
+      preview.innerHTML = `<img id="previewImg" src="${imageBase64}" alt="Factura" style="width:100%;max-height:280px;object-fit:contain;background:#1A1A1A;border-radius:8px">
+        <button class="img-del" onclick="clearImage()">✕</button>`;
+    }
+    preview.style.display = 'block';
+    document.getElementById('btnAI').disabled = false;
+    setAIStatus('','');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage(){
+  imageBase64 = null;
+  const preview = document.getElementById('imgPreview');
+  preview.style.display = 'none';
+  preview.innerHTML = `<img id="previewImg" src="" alt="Factura"><button class="img-del" onclick="clearImage()">✕</button>`;
+  document.getElementById('btnAI').disabled = true;
+  document.getElementById('fileInput').value = '';
+  setAIStatus('','');
+}
+
+function setAIStatus(type, msg){
+  const el = document.getElementById('aiStatus');
+  el.className = 'ai-status' + (type ? ' '+type : '');
+  el.textContent = msg;
+  el.style.display = type ? 'block' : 'none';
+}
+
+// ── IA LEER FACTURA (DEMO) ──
+async function leerFactura(){
+  if(!imageBase64) return;
+  const btn = document.getElementById('btnAI');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Analizando factura...';
+  setAIStatus('loading', '🔍 Analizando el documento con IA...');
+
+  // Simular tiempo de procesamiento
+  await new Promise(r => setTimeout(r, 2200));
+  setAIStatus('loading', '📄 Extrayendo campos de la factura...');
+  await new Promise(r => setTimeout(r, 1500));
+  setAIStatus('loading', '✏️ Preparando datos del memo...');
+  await new Promise(r => setTimeout(r, 900));
+
+  // Datos extraídos de la factura Astec 015417 (demo)
+  const demoData = {
+    proveedor_nombre: 'Astec Industries Latam SPA',
+    proveedor_codigo: 'P-015886',
+    fecha: '2026-03-23',
+    moneda: 'USD',
+    lineas: [{
+      factura:      '015417',
+      oc:           '12PO000790',
+      sucursal:     '90',
+      fecha:        '23/03/2026',
+      totalFactura: '369.53',
+      totalRef:     '335.68',
+      flete:        '33.85',
+      proveedor:    'P-015886',
+      sos:          '591',
+      linea:        'AS1',
+      detalle:      'BRG;FLANGE,4BOLT,SCM,2-1 5/16'
+    }]
+  };
+
+  // Llenar campos del header
+  document.getElementById('fNombreProv').value = demoData.proveedor_nombre;
+  document.getElementById('fProveedor').value  = demoData.proveedor_codigo;
+  document.getElementById('fFecha').value      = demoData.fecha;
+  document.getElementById('fMoneda').value     = demoData.moneda;
+
+  // Llenar líneas
+  rows = [];
+  demoData.lineas.forEach(l => addRow(l));
+
+  setAIStatus('success', `✅ Demo: Se extrajeron ${demoData.lineas.length} línea(s) de la factura correctamente. En producción esto se conectaría a Azure AI.`);
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg> Volver a leer`;
+}
+
+function previewMemo(){
+  const fecha   = document.getElementById('fFecha').value || new Date().toLocaleDateString('es-MX');
+  const prov    = document.getElementById('fProveedor').value || 'P-015886';
+  const de      = document.getElementById('fDe').value || '—';
+  const para    = document.getElementById('fPara').value || '—';
+  const nombre  = document.getElementById('fNombreProv').value || 'Astec';
+  const moneda  = document.getElementById('fMoneda').value;
+
+  const rowsHTML = rows.map(r =>
+    `<tr>${COLS.map(k => `<td>${r[k]||'—'}</td>`).join('')}</tr>`
+  ).join('') || `<tr><td colspan="${COLS.length}" style="color:#999;text-align:center">Sin líneas de factura</td></tr>`;
+
+  const sumFact = rows.reduce((a,r)=>a+(parseFloat(r.totalFactura)||0),0);
+  const sumRef  = rows.reduce((a,r)=>a+(parseFloat(r.totalRef)||0),0);
+  const sumFl   = rows.reduce((a,r)=>a+(parseFloat(r.flete)||0),0);
+
+  let fechaDisplay = '—';
+  try { fechaDisplay = fecha ? new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}) : '—'; } catch(e){}
+
+  const html = `
+    <div style="font-size:.72rem;color:#555;margin-bottom:16px">
+      MAQUINAS DIESEL, S.A. DE C.V. &nbsp;·&nbsp; Av. Industriales del Poniente · Santa Catarina, N.L., México &nbsp;·&nbsp; Tel: [52](81) 8400-2000
+    </div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:20px">
+      <div style="font-size:.82rem;line-height:1.8">
+        <div><strong>Fecha:</strong> ${fechaDisplay}</div>
+        <div><strong>De:</strong> ${de}</div>
+        <div><strong>Para:</strong> ${para}</div>
+        <div><strong>Asunto:</strong> Acuse de recibo de facturas</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#111;margin-bottom:4px">MEMORANDUM INTERNO</div>
+        <div style="font-size:.82rem;font-weight:700">Proveedor ${prov}</div>
+        <div style="font-size:.8rem;color:#555">${nombre}</div>
+      </div>
+    </div>
+    <div style="font-size:.82rem;color:#333;margin-bottom:14px">
+      Buen día, adjunto factura(s) del proveedor <strong>${nombre}</strong> para su proceso de pago.
+    </div>
+    <table class="mp-table">
+      <thead><tr>${LABELS.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+    <div style="text-align:right;margin:12px 0;font-size:.85rem">
+      <span style="color:#555;margin-right:16px">Total Refacciones: <strong>${moneda} ${sumRef.toFixed(2)}</strong></span>
+      <span style="color:#555;margin-right:16px">Flete: <strong>${moneda} ${sumFl.toFixed(2)}</strong></span>
+      <span style="color:#111;font-weight:800;font-size:.95rem">TOTAL: ${moneda} ${sumFact.toFixed(2)}</span>
+    </div>
+    <div style="margin-top:28px;border-top:1px solid #DDD;padding-top:12px;font-size:.78rem;color:#555">
+      <div style="border-top:1px solid #999;width:220px;margin-bottom:6px;padding-top:8px"></div>
+      <strong style="color:#111">${de || 'COMPRAS DE REFACCIONES'}</strong><br>
+      DEPARTAMENTO DE COMPRAS DE REFACCIONES
+    </div>`;
+
+  // Mostrar primero, luego insertar contenido y hacer scroll
+  const section  = document.getElementById('previewSection');
+  const preview  = document.getElementById('memoPreview');
+  section.style.display = 'block';
+  preview.style.display = 'block';
+  preview.innerHTML = html;
+
+  // Scroll suave después de render
+  setTimeout(() => section.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+}
+
+// ── PYODIDE INIT ──
+let pyodideReady = false;
+let pyodideInstance = null;
+
+async function initPyodide(){
+  try {
+    const btn = document.getElementById('btnExcel');
+    btn.disabled = true;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Cargando Python...`;
+
+    pyodideInstance = await loadPyodide();
+    await pyodideInstance.loadPackage('micropip');
+    await pyodideInstance.runPythonAsync(`
+import micropip
+await micropip.install('openpyxl')
+`);
+    pyodideReady = true;
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar Excel`;
+    console.log('Pyodide + openpyxl listos');
+  } catch(e) {
+    console.error('Error cargando Pyodide:', e);
+    // Fallback to basic XLSX if Pyodide fails
+    pyodideReady = false;
+    const btn = document.getElementById('btnExcel');
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar Excel`;
+  }
+}
+
+// ── EXPORTAR EXCEL ──
+async function exportarExcel(){
+  const fecha  = document.getElementById('fFecha').value;
+  const prov   = document.getElementById('fProveedor').value || 'P-015886';
+  const de     = document.getElementById('fDe').value || '';
+  const para   = document.getElementById('fPara').value || 'Fabian Leza / Contabilidad';
+  const nombre = document.getElementById('fNombreProv').value || 'Astec';
+  const moneda = document.getElementById('fMoneda').value;
+  const fileName = `Memo_${nombre}_${prov}_${fecha||new Date().toISOString().split('T')[0]}.xlsx`;
+
+  if(pyodideReady && pyodideInstance){
+    await exportarConPyodide(fecha, prov, de, para, nombre, moneda, fileName);
+  } else {
+    exportarBasico(fecha, prov, de, para, nombre, moneda, fileName);
+  }
+}
+
+async function exportarConPyodide(fecha, prov, de, para, nombre, moneda, fileName){
+  const btn = document.getElementById('btnExcel');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner" style="width:15px;height:15px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:inline-block"></div> Generando...`;
+
+  const data = { fecha, proveedor: prov, de, para, nombre, moneda, lineas: rows };
+
+  pyodideInstance.globals.set('data_json', JSON.stringify(data));
+  pyodideInstance.globals.set('file_name', fileName);
+
+  await pyodideInstance.runPythonAsync(`
+import json, io, base64
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+
+def thin():
+    return Side(border_style='thin', color='000000')
+
+def bdr(top=False, bottom=False, left=False, right=False):
+    return Border(
+        top=thin() if top else Side(),
+        bottom=thin() if bottom else Side(),
+        left=thin() if left else Side(),
+        right=thin() if right else Side()
+    )
+
+data = json.loads(data_json)
+fecha_   = data.get('fecha','')
+prov_    = data.get('proveedor','P-015886')
+de_      = data.get('de','')
+para_    = data.get('para','Fabian Leza / Contabilidad')
+nombre_  = data.get('nombre','Astec')
+moneda_  = data.get('moneda','USD')
+lineas_  = data.get('lineas',[])
+
+wb = Workbook()
+ws = wb.active
+ws.title = nombre_.upper()[:31]
+
+ws.column_dimensions['A'].width = 12
+ws.column_dimensions['B'].width = 9
+ws.column_dimensions['C'].width = 9
+ws.column_dimensions['D'].width = 12
+ws.column_dimensions['E'].width = 12
+ws.column_dimensions['F'].width = 14
+ws.column_dimensions['G'].width = 15
+ws.column_dimensions['H'].width = 12
+ws.column_dimensions['I'].width = 13
+ws.column_dimensions['J'].width = 9
+ws.column_dimensions['K'].width = 14
+
+f9   = Font(name='Calibri', size=9)
+f10  = Font(name='Calibri', size=10)
+f10b = Font(name='Calibri', size=10, bold=True)
+f9b  = Font(name='Calibri', size=9,  bold=True)
+cL   = Alignment(horizontal='left',   vertical='center')
+cC   = Alignment(horizontal='center', vertical='center')
+cJ   = Alignment(horizontal='justify',vertical='center', wrap_text=True)
+yfill = PatternFill('solid', fgColor='FFC200')
+ytot  = PatternFill('solid', fgColor='FFFF00')
+
+# Rows 1-4: Encabezado
+for i, txt in enumerate([
+    'MAQUINAS DIESEL, S.A. DE C.V.',
+    'Av. Industriales del Poniente No. 2300,',
+    'Santa Catarina, N. L., Mexico 66350',
+    'Teléfono: [52](81) 8400-2000  www.madisa.com'
+], start=1):
+    ws[f'A{i}'] = txt
+    ws[f'A{i}'].font = f9
+
+# Row 5: Fecha + MEMORANDUM
+ws.row_dimensions[5].height = 16
+ws['A5'] = fecha_
+ws['A5'].font = f9
+ws['A5'].alignment = cL
+ws.merge_cells('A5:C5')
+ws['J5'] = 'MEMORANDUM INTERNO'
+ws['J5'].font = f10b
+ws['J5'].alignment = cL
+ws.merge_cells('J5:K5')
+
+# Row 6: De
+ws.row_dimensions[6].height = 15
+ws['A6'] = 'De:'
+ws['A6'].font = f9b
+ws['A6'].alignment = Alignment(horizontal='justify')
+ws['B6'] = de_
+ws['B6'].font = f9
+ws['B6'].alignment = cL
+ws.merge_cells('B6:E6')
+
+# Row 7: Para + Proveedor
+ws.row_dimensions[7].height = 15
+ws['A7'] = 'Para:'
+ws['A7'].font = f9b
+ws['A7'].alignment = Alignment(horizontal='justify')
+ws['B7'] = para_
+ws['B7'].font = f9
+ws['B7'].alignment = cL
+ws.merge_cells('B7:E7')
+ws['J7'] = f'Proveedor  {prov_}'
+ws['J7'].font = Font(name='Calibri', size=10, bold=True)
+ws.merge_cells('J7:K7')
+
+# Row 8: Asunto
+ws.row_dimensions[8].height = 15
+ws['A8'] = 'Asunto:'
+ws['A8'].font = f9b
+ws['A8'].alignment = Alignment(horizontal='justify')
+ws['B8'] = 'Acuse de recibo de facturas'
+ws['B8'].font = f10
+ws.merge_cells('B8:E8')
+
+ws.row_dimensions[9].height = 6
+
+# Rows 10-12: Intro
+ws.row_dimensions[10].height = 45
+intro = (f'Buen día, adjunto factura del proveedor {nombre_} para su revisión y captura para pago. '
+         f'Favor de contemplar para su pago en el presente periodo. Es por material que se ordenó '
+         f'para documentos de emergencia para las oficinas de Madisa que se detallan frente a cada '
+         f'número de factura. Los números de facturas son:')
+ws['A10'] = intro
+ws['A10'].font = f9
+ws['A10'].alignment = cJ
+ws.merge_cells('A10:K12')
+
+ws.row_dimensions[13].height = 6
+
+# Row 14: Headers con amarillo MADISA
+ws.row_dimensions[14].height = 27
+hcols = ['A','B','D','E','F','G','H','I','J','K']
+hlbls = ['OC','FACTURA','SUCURSAL','FECHA','Total factura','total refacciones','FLETE','#Proveedor','SOS','Línea de producto']
+for col, lbl in zip(hcols, hlbls):
+    c = ws[f'{col}14']
+    c.value = lbl
+    c.font  = f10b
+    c.alignment = cC
+    c.fill  = yfill
+    c.border = bdr(True,True,True,True)
+ws.merge_cells('B14:C14')
+ws['C14'].fill   = yfill
+ws['C14'].border = bdr(True,True,True,True)
+
+# Data rows
+DR = 15
+for i, linea in enumerate(lineas_):
+    r = DR + i
+    ws.row_dimensions[r].height = 16.5
+    vals = [
+        ('A', linea.get('oc','')),
+        ('B', linea.get('factura','')),
+        ('D', linea.get('sucursal','')),
+        ('E', linea.get('fecha','')),
+        ('F', linea.get('totalFactura','')),
+        ('G', linea.get('totalRef','')),
+        ('H', linea.get('flete','')),
+        ('I', linea.get('proveedor', prov_)),
+        ('J', linea.get('sos','')),
+        ('K', linea.get('linea','')),
+    ]
+    for col, val in vals:
+        cell = ws[f'{col}{r}']
+        try: cell.value = float(val) if val not in ('', None) else ''
+        except: cell.value = val
+        cell.font = f10
+        cell.alignment = cC
+        cell.border = bdr(True,True,True,True)
+    for col in ['F','G','H']:
+        ws[f'{col}{r}'].number_format = '#,##0.00'
+    ws.merge_cells(f'B{r}:C{r}')
+    ws[f'C{r}'].border = bdr(True,True,True,True)
+
+# Total row
+TR = DR + len(lineas_) + 3
+ws.row_dimensions[TR].height = 16
+sum_total = sum(float(l.get('totalFactura',0) or 0) for l in lineas_)
+ws.merge_cells(f'G{TR}:H{TR}')
+ws[f'G{TR}'] = 'TOTAL'
+ws[f'G{TR}'].font = f10b
+ws[f'G{TR}'].alignment = cC
+ws[f'G{TR}'].border = bdr(True,True,True,True)
+ws[f'H{TR}'].border = bdr(True,True,True,True)
+ws[f'I{TR}'] = sum_total
+ws[f'I{TR}'].font = f10
+ws[f'I{TR}'].alignment = cC
+ws[f'I{TR}'].number_format = '#,##0.00'
+ws[f'I{TR}'].border = bdr(True,True,True,True)
+ws[f'J{TR}'] = moneda_
+ws[f'J{TR}'].font = f10
+ws[f'J{TR}'].alignment = cC
+ws[f'J{TR}'].fill = ytot
+ws[f'J{TR}'].border = bdr(True,True,True,True)
+
+# Firma
+FR = TR + 2
+ws[f'D{FR}'] = '_______________________________________'
+ws[f'D{FR}'].font = f9
+ws.merge_cells(f'D{FR}:H{FR}')
+ws[f'D{FR+1}'] = de_
+ws[f'D{FR+1}'].font = f9
+ws.merge_cells(f'D{FR+1}:H{FR+1}')
+ws[f'D{FR+2}'] = 'DEPARTAMENTO DE COMPRAS DE REFACCIONES'
+ws[f'D{FR+2}'].font = f9
+ws.merge_cells(f'D{FR+2}:H{FR+2}')
+
+buf = io.BytesIO()
+wb.save(buf)
+buf.seek(0)
+result_b64 = base64.b64encode(buf.read()).decode()
+`);
+
+  const b64 = pyodideInstance.globals.get('result_b64');
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const blob = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  a.click();
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar Excel`;
+}
+
+function exportarBasico(fecha, prov, de, para, nombre, moneda, fileName){
+  // Fallback simple si Pyodide no cargó
+  const wb = XLSX.utils.book_new();
+  const wsData = [];
+  wsData.push(['MAQUINAS DIESEL, S.A. DE C.V.','','','','','','','','','','MEMORANDUM INTERNO']);
+  wsData.push(['Av. Industriales del Poniente No. 2300, Santa Catarina, N.L.']);
+  wsData.push(['']);
+  wsData.push([fecha,'','','','','','','','','',`Proveedor ${prov}`]);
+  wsData.push(['De:', de]);
+  wsData.push(['Para:', para]);
+  wsData.push(['Asunto:', 'Acuse de recibo de facturas']);
+  wsData.push(['']);
+  wsData.push([`Buen día, adjunto facturas del proveedor ${nombre}`]);
+  wsData.push(['']);
+  wsData.push(['', ...LABELS]);
+  rows.forEach(r => wsData.push(['', ...COLS.map(k => r[k]||'')]));
+  const sumFact = rows.reduce((a,r)=>a+(parseFloat(r.totalFactura)||0),0);
+  wsData.push(['']); wsData.push(['','','','','','','TOTAL','',sumFact.toFixed(2),moneda]);
+  wsData.push(['']); wsData.push(['','______________________________']); wsData.push(['',de]);
+  wsData.push(['','DEPARTAMENTO DE COMPRAS DE REFACCIONES']);
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = Array(12).fill({wch:16}); ws['!cols'][0]={wch:4};
+  XLSX.utils.book_append_sheet(wb, ws, nombre.toUpperCase().slice(0,31)||'ASTEC');
+  XLSX.writeFile(wb, fileName);
+}
+
+// ── TEMA ──
+function toggleTheme(){
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeIcon').innerHTML = isLight
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  localStorage.setItem('mts_theme', isLight ? 'light' : 'dark');
+}
+if(localStorage.getItem('mts_theme')==='light') toggleTheme();
+
+init();
+// Cargar Pyodide en background al abrir la página
+initPyodide();
+</script>
+</body>
+</html>
